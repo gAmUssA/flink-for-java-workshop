@@ -73,6 +73,14 @@ Whether you are building analytics dashboards, event-driven systems, or handling
 *Why?* If Terraform scripts are used, a fundamental knowledge of how it works would be beneficial.
 *Terraform Getting Started Guide:* https://developer.hashicorp.com/terraform/tutorials[Terraform Tutorials]
 
+=== 3️⃣ Confluent CLI
+*Why?* The workshop will use the commands in the Confluent CLI to get useful information about new Confluent infrastructure.
+*Download and Install:* https://docs.confluent.io/confluent-cli/current/install.html[Confluent CLI Installation Instructions]
+
+=== 4️⃣ jq
+*Why?* The workshop will use jq to build configuration files used to demonstrate the Confluent Flink Table API.
+*Download and Install:* https://jqlang.org/download/[jq Download Instructions]
+
 == 📌 Pre-Workshop Setup Tasks
 
 1. *Sign up for Confluent Cloud & Configure API Keys* – Ensure access credentials are available before the workshop.
