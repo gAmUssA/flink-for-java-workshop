@@ -58,3 +58,5 @@ gradle-app.setting
 .gradletasknamecache
 .project
 .classpath
+
+cloud.properties
