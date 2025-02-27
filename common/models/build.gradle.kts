@@ -5,6 +5,13 @@ plugins {
 dependencies {
     // Add model-specific dependencies here
     implementation("org.apache.avro:avro:1.11.3")
+    
+    // Test dependencies
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.assertj:assertj-core:3.24.2")
 }
 
 repositories {
@@ -26,6 +33,21 @@ sourceSets {
     main {
         java {
             srcDir("build/generated-main-avro-java")
+        }
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
+testing {
+    suites {
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter()
         }
     }
 }

@@ -1,0 +1,62 @@
+{
+  "type": "record",
+  "name": "Flight",
+  "namespace": "io.confluent.developer.models.flight",
+  "doc": "Schema for flight data",
+  "fields": [
+    {
+      "name": "flightNumber",
+      "type": {
+        "type": "string",
+        "avro.java.string": "String"
+      },
+      "doc": "Flight number"
+    },
+    {
+      "name": "airline",
+      "type": {
+        "type": "string",
+        "avro.java.string": "String"
+      },
+      "doc": "Airline operating the flight"
+    },
+    {
+      "name": "origin",
+      "type": {
+        "type": "string",
+        "avro.java.string": "String"
+      },
+      "doc": "Origin airport code"
+    },
+    {
+      "name": "destination",
+      "type": {
+        "type": "string",
+        "avro.java.string": "String"
+      },
+      "doc": "Destination airport code"
+    },
+    {
+      "name": "scheduledDeparture",
+      "type": "long",
+      "doc": "Scheduled departure time in milliseconds since epoch"
+    },
+    {
+      "name": "actualDeparture",
+      "type": [
+        "null",
+        "long"
+      ],
+      "default": null,
+      "doc": "Actual departure time in milliseconds since epoch"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "string",
+        "avro.java.string": "String"
+      },
+      "doc": "Current status of the flight"
+    }
+  ]
+}
