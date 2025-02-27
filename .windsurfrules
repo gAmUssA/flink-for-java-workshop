@@ -1,0 +1,36 @@
+# project rules
+
+## Makefile
+
+- use make files when need to execute more than one command
+- for Makefiles use emoji and ascii colors for better readability
+
+## Java 
+
+- use java 21 for building the project
+- use gradle with Kotlin for build scripts
+- prefer multimodule project structure
+- common modules (that will be shared between projects) should be in the `common` directory
+- use sdkman for managing SDKs
+
+## Dockerfile and Docker Compose
+
+- prefer to use https://orbstack.dev/   for managing docker containers (instead of docker desktop)
+- for managing docker containers use docker compose and don't add version attribute for docker-compose.yaml file
+- for kafka in docker use apache/kafka:3.8.0 image in Kraft more withour zookeeper
+
+## Documentation
+
+- use asciidoc (*.adoc) for documentation and use emoji for better readability
+- use one sentence per line in asciidoc
+
+## Git and Github
+
+- use git for version control
+- when working on a new feature create a new branch (feature/feature-name)
+- use github cli to interact with github
+
+## brew (for mac)
+
+- use brew for installing dependencies
+- prefer to use Brewfile for managing dependencies

@@ -1,0 +1,134 @@
+= Flink Data Generator PRD
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: highlight.js
+
+== Overview
+
+This document outlines the requirements and design for a Flink-based data generator that will generate flight data using the Avro schema defined in the project. 
+The generator will be implemented as a separate Gradle module to avoid interfering with the existing codebase.
+
+== Project Context
+
+=== Existing Components
+
+* *Flight Avro Schema*: Located at `/common/models/src/main/avro/flight.avsc`, defines a Flight record with fields like flightNumber, airline, origin, destination, scheduledDeparture, actualDeparture, and status.
+* *Kafka-based Data Generator*: Implemented in `AvroFlightDataGenerator.java`, generates random flight data and sends it to a Kafka topic using the Avro serializer and Schema Registry. Use Data Faker for Java library https://github.com/datafaker-net/datafaker to generate random data when needed.
+* *Flink Processor*: Existing implementation in `FlightDelayProcessor.java` that processes flight events from Kafka, calculates route delay statistics, and outputs to Kafka topics.
+* *Docker Environment*: Includes Kafka (3.9.0) in KRaft mode and Schema Registry (7.8.0) services.
+
+=== Technical Stack
+
+* *Kafka*: Version 3.8.0+
+* *Flink*: Version 1.20.0
+* *Flink Kafka Connector*: Version 3.4.0-1.20
+* *Avro*: Version 1.12.0
+* *Confluent Schema Registry*: Version 7.8.0
+* *Build System*: Gradle with Kotlin DSL
+
+== Requirements
+
+=== Functional Requirements
+
+1. Create a Flink-based `DataGeneratorJob` that generates flight data based on the Avro schema
+2. Implement a `DataGeneratorSource` for Flink that uses the flight.avsc schema
+3. Support integration with Schema Registry for Avro serialization
+4. Externalize Kafka and Schema Registry configurations in a properties file
+5. Support for switching between development (docker-compose) and cloud environments
+
+=== Technical Requirements
+
+1. Use Flink APIs version 1.20.0
+2. Implement a custom Flink source for data generation
+3. Configure the source to produce data at a configurable rate
+4. Ensure compatibility with the existing Avro schema
+5. Use Flink's Kafka connector (version 3.4.0-1.20) for writing to Kafka
+6. Support Avro serialization with Schema Registry integration
+
+=== Configuration Requirements
+
+1. Create a `producer.properties` file for Kafka and Schema Registry configuration
+2. Support environment variables for overriding default configurations
+3. Enable switching between local development and cloud environments
+
+== Technical Design
+
+=== Flink Data Stream APIs
+
+==== Custom Source Implementation
+
+* `SourceFunction<T>`: The basic interface for implementing a custom source that generates data.
+* `ParallelSourceFunction<T>`: If we want to parallelize data generation across multiple tasks.
+* `RichSourceFunction<T>`: An enhanced version that provides access to runtime context and lifecycle methods.
+
+==== Source Context
+
+* `SourceContext<T>`: Used within the source to emit records to the Flink pipeline.
+* Methods like `collect()` and `collectWithTimestamp()` to emit records with optional timestamps.
+
+==== Watermark Generation
+
+* `WatermarkStrategy`: To define how watermarks are generated for the source.
+* `TimestampAssigner`: To assign timestamps to the generated records.
+
+==== Serialization
+
+* `SerializationSchema<T>`: For serializing the generated Flight records to Kafka.
+* `KafkaAvroSerializationSchema`: Specifically for Avro serialization with Schema Registry integration.
+
+==== Sink Configuration
+
+* `KafkaSink`: To write the generated data to Kafka topics.
+* `KafkaSink.Builder`: To configure the Kafka sink with serializers, topic, etc.
+
+==== Execution Environment
+
+* `StreamExecutionEnvironment`: The entry point for creating Flink data stream jobs.
+* Methods like `addSource()` to add our custom source to the pipeline.
+
+==== Configuration and Properties
+
+* `Configuration`: For passing configuration parameters to the job.
+* `ParameterTool`: For parsing command-line arguments and property files.
+
+==== Checkpointing (for Fault Tolerance)
+
+* `CheckpointedFunction`: Interface for implementing checkpointing in our source.
+* `ListState`: For storing the state of our generator between checkpoints.
+
+==== Rate Limiting
+
+* `RateLimiterStrategy`: To control the rate at which records are generated.
+* Custom rate limiting logic within the source.
+
+=== Implementation Approach
+
+1. Create a custom `DataGeneratorSource` that extends `RichSourceFunction<Flight>` and implements `CheckpointedFunction`.
+2. Use the Avro schema to generate Flight records similar to the existing `AvroFlightDataGenerator`.
+3. Configure a `KafkaSink` with `KafkaAvroSerializationSchema` to write the generated records to Kafka.
+4. Use `ParameterTool` to load configuration from a properties file and environment variables.
+5. Implement checkpointing to ensure fault tolerance.
+6. Add rate limiting to control the generation speed.
+
+== Deliverables
+
+1. `DataGeneratorJob.java`: Main Flink job for data generation
+2. `DataGeneratorSource.java`: Custom Flink source for generating flight data
+3. `FlightAvroSerializationSchema.java`: Schema for Avro serialization with Schema Registry
+4. `producer.properties`: Configuration file for Kafka and Schema Registry
+5. Integration with the existing build system (Gradle)
+6. Dockerfile for containerization
+7. Makefile for build and deployment automation
+
+== Integration with Docker Compose
+
+The new Flink data generator will be integrated with the existing Docker Compose setup, allowing for easy testing and comparison with the existing Kafka-based data generator.
+
+== Future Considerations
+
+1. Performance benchmarking between Flink and Kafka data generators
+2. Extension to support additional data schemas
+3. Integration with cloud-based Kafka and Schema Registry services
+4. Support for different data generation patterns (e.g., burst, seasonal, etc.)

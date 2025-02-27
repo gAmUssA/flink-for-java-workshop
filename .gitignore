@@ -60,3 +60,5 @@ gradle-app.setting
 .classpath
 
 cloud.properties
+.vscode
+bin

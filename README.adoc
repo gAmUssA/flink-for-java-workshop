@@ -3,6 +3,9 @@ Viktor Gamov <viktor@confluent.io>
 v1.0, 2025-02-17
 :toc:
 
+image:https://github.com/gAmUssA/flink-for-java-workshop/actions/workflows/smoke-test.yml/badge.svg[Smoke Test,link=https://github.com/gAmUssA/flink-for-java-workshop/actions/workflows/smoke-test.yml]
+image:https://github.com/gAmUssA/flink-for-java-workshop/actions/workflows/ci.yml/badge.svg[CI,link=https://github.com/gAmUssA/flink-for-java-workshop/actions/workflows/ci.yml]
+
 == 📚 Workshop Description & Learning Objectives
 
 You were tasked with building a real-time platform, but traditional tools couldn’t handle the massive data streams, leading to lagging performance and frustrated users. 
@@ -34,6 +37,7 @@ Whether you are building analytics dashboards, event-driven systems, or handling
 === 1️⃣ Docker & Docker Compose (Mandatory)
 *Why?* Flink and Kafka components will be containerized.
 *Download & Install:* https://www.docker.com/get-started[Docker Website]
+*macOS Alternative:* https://orbstack.dev/[OrbStack] (recommended for better performance)
 
 === 2️⃣ Confluent Cloud Account (Mandatory)
 *Why?* Required for Kafka-based streaming exercises.
@@ -56,6 +60,12 @@ Whether you are building analytics dashboards, event-driven systems, or handling
 === 6️⃣ Gradle Installed via Wrapper (No Need for Local Installation)
 *Why?* The workshop will use the **Gradle Wrapper**, eliminating the need for manual installation.
 *Gradle Docs:* https://docs.gradle.org/current/userguide/gradle_wrapper.html[Gradle Wrapper Documentation]
+
+=== 7️⃣ Quick Setup for macOS Users with Homebrew
+*Why?* Simplifies installation of all required dependencies.
+*How?* This project includes a `Brewfile` for managing dependencies.
+*Setup:* Run `make setup-mac` to install all required dependencies using Homebrew.
+*Update:* Run `make update-brew-deps` to update dependencies.
 
 == 🌐 Network & System Requirements
 

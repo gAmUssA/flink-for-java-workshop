@@ -1,0 +1,67 @@
+name: 🔍 Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build:
+    name: 🚀 Build and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        java-version: [21]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: 🛠️ Setup Gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: wrapper
+
+      - name: ✅ Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: 📦 Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew tap confluentinc/tap
+          brew bundle
+
+      - name: 📦 Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: 🏗️ Build with Gradle
+        run: ./gradlew build --no-daemon
+
+      - name: 🧪 Run tests
+        run: ./gradlew test --no-daemon
+
+      - name: 📦 Build shadow JARs
+        run: ./gradlew shadowJar --no-daemon
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: |
+            flink-streaming/build/libs/*.jar
+            flink-sql/build/libs/*.jar
+          retention-days: 5
