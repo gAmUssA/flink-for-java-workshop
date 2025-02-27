@@ -3,10 +3,11 @@ package io.confluent.developer.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 /**
@@ -36,9 +37,9 @@ public class ConfigUtils {
         }
         
         // Then try to load from file system
-        File file = new File(filePath);
-        if (file.exists()) {
-            try (FileInputStream input = new FileInputStream(file)) {
+        Path path = Paths.get(filePath);
+        if (Files.exists(path)) {
+            try (InputStream input = Files.newInputStream(path)) {
                 properties.load(input);
                 LOG.info("Loaded properties from file system: {}", filePath);
                 return properties;
