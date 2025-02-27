@@ -4,8 +4,8 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy the shadow JARs
-COPY flink-streaming/build/libs/*-all.jar /app/flink-streaming.jar
-COPY flink-sql/build/libs/*-all.jar /app/flink-sql.jar
+COPY flink-streaming/build/libs/flink-streaming.jar /app/flink-streaming.jar
+COPY flink-sql/build/libs/flink-sql.jar /app/flink-sql.jar
 
 # Copy configuration files
 COPY cloud.properties* /app/
