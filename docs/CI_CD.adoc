@@ -1,0 +1,103 @@
+= 🔄 CI/CD Setup
+:toc:
+:icons: font
+
+== 🚀 Overview
+
+This document describes the Continuous Integration and Continuous Deployment (CI/CD) setup for the Flink for Java Workshop project.
+The CI/CD pipeline is implemented using GitHub Actions and is designed to ensure build reliability.
+
+== 🔍 Workflows
+
+=== 1️⃣ Smoke Test
+
+The Smoke Test workflow (`smoke-test.yml`) is a lightweight test that quickly verifies the build process works correctly.
+It runs on both Ubuntu and macOS environments to ensure cross-platform compatibility.
+
+*Trigger Events:*
+
+* Push to `main` branch
+* Pull requests to `main` branch
+* Manual trigger (workflow_dispatch)
+
+*Steps:*
+
+* Checkout code
+* Set up JDK 21
+* Setup and validate Gradle
+* Install dependencies (using Brewfile on macOS)
+* Build the project
+* Run tests
+* Build shadow JARs
+* Upload build artifacts
+
+=== 2️⃣ CI Workflow
+
+The CI workflow (`ci.yml`) is a comprehensive test that includes build tests and Docker build verification.
+
+*Trigger Events:*
+
+* Push to `main` branch
+* Pull requests to `main` branch
+* Weekly schedule (Sunday at midnight UTC)
+* Manual trigger (workflow_dispatch)
+
+*Jobs:*
+
+1. *Build:* Build and test the project
+   * Runs on both Ubuntu and macOS
+   * Uses Brewfile for macOS dependencies
+   * Builds the project and runs tests
+   * Creates shadow JARs
+   * Uploads build artifacts
+
+2. *Docker:* Tests Docker image building
+   * Builds a Docker image using the project's Dockerfile
+   * Verifies the image builds successfully
+
+== 🛠️ Configuration Files
+
+=== GitHub Actions Workflow Files
+
+* `.github/workflows/smoke-test.yml` - Smoke test workflow
+* `.github/workflows/ci.yml` - CI workflow
+
+=== Docker Configuration
+
+* `Dockerfile` - Docker image definition for the project
+
+== 🧪 Running Locally
+
+To test the build process locally before pushing to GitHub:
+
+[source,bash]
+----
+# Build the project
+./gradlew build
+
+# Run tests
+./gradlew test
+
+# Build Docker image
+docker build -t flink-for-java-workshop:local .
+----
+
+You can also use the Makefile for convenience:
+
+[source,bash]
+----
+# Build the project
+make build
+
+# Build Docker image
+make docker-build
+----
+
+== 📋 Badges
+
+The README includes status badges for both workflows:
+
+* Smoke Test: Shows the status of the smoke test workflow
+* CI: Shows the status of the CI workflow
+
+These badges provide at-a-glance visibility into the build status of the project.

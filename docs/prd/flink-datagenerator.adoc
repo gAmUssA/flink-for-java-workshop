@@ -15,7 +15,7 @@ The generator will be implemented as a separate Gradle module to avoid interferi
 === Existing Components
 
 * *Flight Avro Schema*: Located at `/common/models/src/main/avro/flight.avsc`, defines a Flight record with fields like flightNumber, airline, origin, destination, scheduledDeparture, actualDeparture, and status.
-* *Kafka-based Data Generator*: Implemented in `AvroFlightDataGenerator.java`, generates random flight data and sends it to a Kafka topic using the Avro serializer and Schema Registry. Use Data Faker for Java library https://github.com/datafaker-net/datafaker to generate random data when needed.
+* *Kafka-based Data Generator*: Implemented in `AvroFlightDataGenerator.java`, generates random flight data and sends it to a Kafka topic using the Avro serializer and Schema Registry. Use Data Faker for a Java library https://github.com/datafaker-net/datafaker to generate random data when needed.
 * *Flink Processor*: Existing implementation in `FlightDelayProcessor.java` that processes flight events from Kafka, calculates route delay statistics, and outputs to Kafka topics.
 * *Docker Environment*: Includes Kafka (3.9.0) in KRaft mode and Schema Registry (7.8.0) services.
 

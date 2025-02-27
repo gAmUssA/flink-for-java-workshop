@@ -22,8 +22,8 @@ allprojects {
 subprojects {
     apply(plugin = "java")
     
-    val flinkVersion = "1.18.1"
-    val confluentVersion = "7.6.0"
+    val flinkVersion = "1.20.0"
+    val confluentVersion = "7.9.0"
     val junitVersion = "5.10.2"
     val logbackVersion = "1.4.14"
     val slf4jVersion = "2.0.11"
@@ -67,8 +67,8 @@ configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink
     apply(plugin = "application")
     apply(plugin = "com.github.johnrengelman.shadow")
     
-    val flinkVersion = "1.18.1"
-    val confluentVersion = "7.6.0"
+    val flinkVersion = "1.20.0"
+    val confluentVersion = "7.9.0"
     
     dependencies {
         // Common modules
@@ -81,7 +81,7 @@ configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink
         implementation("org.apache.flink:flink-runtime-web:$flinkVersion")
         
         // Flink Connectors
-        implementation("org.apache.flink:flink-connector-kafka:3.0.2-1.18")
+        implementation("org.apache.flink:flink-connector-kafka:3.4.0-1.20")
         implementation("org.apache.flink:flink-connector-files:$flinkVersion")
         
         // Confluent
@@ -94,7 +94,7 @@ configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink
 // Configuration specific to the flink-sql module
 project(":flink-sql") {
     dependencies {
-        val flinkVersion = "1.18.1"
+        val flinkVersion = "1.20.0"
         
         // Flink Table API & SQL
         implementation("org.apache.flink:flink-table-api-java-bridge:$flinkVersion")

@@ -1,12 +1,12 @@
 # 🛠️ Flink for Java Workshop - Setup Makefile 🛠️
 
 # Colors for better readability
-BLUE=\033[0;34m
-GREEN=\033[0;32m
-YELLOW=\033[1;33m
-RED=\033[0;31m
-BOLD=\033[1m
-RESET=\033[0m
+BLUE:=$(shell printf "\033[0;34m")
+GREEN:=$(shell printf "\033[0;32m")
+YELLOW:=$(shell printf "\033[1;33m")
+RED:=$(shell printf "\033[0;31m")
+BOLD:=$(shell printf "\033[1m")
+RESET:=$(shell printf "\033[0m")
 
 # Emojis for better readability
 CHECK=✅
@@ -17,6 +17,8 @@ ROCKET=🚀
 COFFEE=☕
 CLOCK=🕒
 CLOUD=☁️
+STAR=⭐
+TERRAFORM=🌐
 
 # Default target
 .PHONY: help
@@ -24,26 +26,50 @@ help:
 	@echo "${BLUE}${ROCKET} Flink for Java Workshop - Setup Makefile ${RESET}"
 	@echo ""
 	@echo "${GREEN}${BOLD}Available targets:${RESET}"
-	@echo "  ${YELLOW}setup-mac${RESET}        - Install all required dependencies on macOS using Brewfile"
-	@echo "  ${YELLOW}setup-linux${RESET}      - Install all required dependencies on Linux"
-	@echo "  ${YELLOW}setup-terraform${RESET}  - Setup Terraform for Confluent Cloud"
-	@echo "  ${YELLOW}terraform-init${RESET}   - Initialize Terraform"
-	@echo "  ${YELLOW}terraform-plan${RESET}   - Plan Terraform changes"
-	@echo "  ${YELLOW}terraform-apply${RESET}  - Apply Terraform changes"
-	@echo "  ${YELLOW}terraform-destroy${RESET} - Destroy Terraform-managed infrastructure"
-	@echo "  ${YELLOW}terraform-output${RESET} - Generate cloud.properties from Terraform output"
-	@echo "  ${YELLOW}tf-init${RESET}          - Shorthand for terraform-init"
-	@echo "  ${YELLOW}tf-plan${RESET}          - Shorthand for terraform-plan"
-	@echo "  ${YELLOW}tf-apply${RESET}         - Shorthand for terraform-apply"
-	@echo "  ${YELLOW}tf-destroy${RESET}       - Shorthand for terraform-destroy"
-	@echo "  ${YELLOW}tf-out${RESET}           - Shorthand for terraform-output"
-	@echo "  ${YELLOW}cc-setup${RESET}         - Complete Confluent Cloud setup (init, plan, apply, output)"
-	@echo "  ${YELLOW}cc-teardown${RESET}      - Teardown Confluent Cloud infrastructure"
-	@echo "  ${YELLOW}clean${RESET}            - Clean up temporary files"
-	@echo "  ${YELLOW}check-prereqs${RESET}    - Check if all prerequisites are installed"
-	@echo "  ${YELLOW}update-brew-deps${RESET} - Update Homebrew dependencies using Brewfile"
-	@echo "  ${YELLOW}ci-checks${RESET}       - Run CI checks locally"
-	@echo "  ${YELLOW}docker-build${RESET}    - Build Docker image locally"
+	@echo ""
+	@echo "${YELLOW}${STAR} Environment Setup:${RESET}"
+	@echo "${BLUE}${INFO} 🔧 setup-mac${RESET}          - Install all required dependencies on macOS using Brewfile"
+	@echo "${BLUE}${INFO} 🔧 setup-linux${RESET}        - Install all required dependencies on Linux"
+	@echo "${BLUE}${INFO} 🔍 check-prereqs${RESET}      - Check if all prerequisites are installed"
+	@echo "${BLUE}${INFO} 🔄 update-brew-deps${RESET}   - Update Homebrew dependencies using Brewfile"
+	@echo ""
+	@echo "${YELLOW}${STAR} Build & Run:${RESET}"
+	@echo "${BLUE}${INFO} 🏗️ build${RESET}              - Build the entire project with Gradle"
+	@echo "${BLUE}${INFO} 🏗️ build-data-generator${RESET} - Build the Flink Data Generator"
+	@echo "${BLUE}${INFO} 🚀 run-streaming${RESET}      - Run the Flink Streaming application"
+	@echo "${BLUE}${INFO} 🚀 run-sql${RESET}            - Run the Flink SQL application"
+	@echo "${BLUE}${INFO} 🧪 ci-checks${RESET}          - Run CI checks locally"
+	@echo ""
+	@echo "${YELLOW}${STAR} Data Generator:${RESET}"
+	@echo "${BLUE}${INFO} 🚀 run-data-generator-local${RESET} - Run the Flink Data Generator in local environment"
+	@echo "${BLUE}${INFO} ☁️ run-data-generator-cloud${RESET} - Run the Flink Data Generator in cloud environment"
+	@echo "${BLUE}${INFO} 🚀 run-data-generator-with-props${RESET} - Run with custom properties (PROPS=path/to/properties)"
+	@echo ""
+	@echo "${YELLOW}${STAR} Docker Management:${RESET}"
+	@echo "${BLUE}${INFO} 🐳 docker-up${RESET}          - Start all containers"
+	@echo "${BLUE}${INFO} 🐳 docker-down${RESET}        - Stop and remove all containers"
+	@echo "${BLUE}${INFO} 🐳 docker-restart${RESET}     - Restart all containers"
+	@echo "${BLUE}${INFO} 🐳 docker-ps${RESET}          - List running containers and their status"
+	@echo "${BLUE}${INFO} 🐳 docker-logs${RESET}        - View logs (optionally for a specific service with SERVICE=name)"
+	@echo "${BLUE}${INFO} 🐳 docker-build${RESET}       - Build Docker image locally"
+	@echo ""
+	@echo "${YELLOW}${STAR} Terraform & Confluent Cloud:${RESET}"
+	@echo "${BLUE}${INFO} ☁️ setup-terraform${RESET}    - Setup Terraform for Confluent Cloud (using HashiCorp's official tap)"
+	@echo "${BLUE}${INFO} ☁️ terraform-init${RESET}     - Initialize Terraform"
+	@echo "${BLUE}${INFO} ☁️ terraform-plan${RESET}     - Plan Terraform changes"
+	@echo "${BLUE}${INFO} ☁️ terraform-apply${RESET}    - Apply Terraform changes"
+	@echo "${BLUE}${INFO} ☁️ terraform-destroy${RESET}  - Destroy Terraform-managed infrastructure"
+	@echo "${BLUE}${INFO} ☁️ terraform-output${RESET}   - Generate cloud.properties from Terraform output"
+	@echo "${BLUE}${INFO} ☁️ cc-setup${RESET}           - Complete Confluent Cloud setup (init, plan, apply, output)"
+	@echo "${BLUE}${INFO} ☁️ cc-teardown${RESET}        - Teardown Confluent Cloud infrastructure"
+	@echo "${BLUE}${INFO} ☁️ tf-init${RESET}            - Shorthand for terraform-init"
+	@echo "${BLUE}${INFO} ☁️ tf-plan${RESET}            - Shorthand for terraform-plan"
+	@echo "${BLUE}${INFO} ☁️ tf-apply${RESET}           - Shorthand for terraform-apply"
+	@echo "${BLUE}${INFO} ☁️ tf-destroy${RESET}         - Shorthand for terraform-destroy"
+	@echo "${BLUE}${INFO} ☁️ tf-out${RESET}             - Shorthand for terraform-output"
+	@echo ""
+	@echo "${YELLOW}${STAR} Cleanup:${RESET}"
+	@echo "${BLUE}${INFO} 🧹 clean${RESET}              - Clean up temporary files"
 	@echo ""
 	@echo "${BLUE}${INFO} For more information, see README.adoc${RESET}"
 
@@ -57,10 +83,8 @@ update-brew-deps:
 	fi
 	@echo "${BLUE}${INFO} Updating Homebrew...${RESET}"
 	brew update
-	@echo "${BLUE}${INFO} Tapping Confluent repository...${RESET}"
-	brew tap confluentinc/tap
 	@echo "${BLUE}${INFO} Updating dependencies from Brewfile...${RESET}"
-	brew bundle || echo "${YELLOW}${WARNING} Some Brewfile installations failed. Check output for details.${RESET}"
+	brew bundle || { printf "${YELLOW}${WARNING} Some Brewfile installations failed. Check output for details.${RESET}\n"; }
 	@echo "${GREEN}${CHECK} Homebrew dependencies updated!${RESET}"
 
 # Check prerequisites
@@ -123,17 +147,14 @@ check-prereqs:
 .PHONY: setup-mac
 setup-mac:
 	@echo "${BLUE}${ROCKET} Setting up dependencies on macOS...${RESET}"
-	@echo "${YELLOW}${INFO} Installing/Updating Homebrew packages using Brewfile...${RESET}"
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo "${RED}${ERROR} Homebrew is not installed. Please install it first: https://brew.sh${RESET}"; \
 		exit 1; \
 	fi
 	@echo "${BLUE}${INFO} Updating Homebrew...${RESET}"
 	brew update
-	@echo "${BLUE}${INFO} Tapping Confluent repository...${RESET}"
-	brew tap confluentinc/tap
 	@echo "${BLUE}${INFO} Installing dependencies from Brewfile...${RESET}"
-	brew bundle || echo "${YELLOW}${WARNING} Some Brewfile installations failed. Check output for details.${RESET}"
+	@brew bundle || { printf "${YELLOW}${WARNING} Some Brewfile installations failed. Check output for details.${RESET}\n"; }
 	@echo "${BLUE}${INFO} Checking for SDKMAN installation...${RESET}"
 	@if [ -d "$$HOME/.sdkman" ]; then \
 		echo "${GREEN}${CHECK} SDKMAN is already installed${RESET}"; \
@@ -170,7 +191,7 @@ setup-linux:
 	sudo usermod -aG docker $USER
 	# Install Terraform
 	@echo "${BLUE}${INFO} Installing Terraform...${RESET}"
-	sudo apt-get install -y software-properties-common
+	sudo apt-get install -y software-properties-common gnupg
 	wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
 	echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
 	sudo apt-get update
@@ -195,7 +216,7 @@ setup-linux:
 .PHONY: setup-terraform
 setup-terraform:
 	@echo "${BLUE}${CLOUD} Setting up Terraform for Confluent Cloud...${RESET}"
-	@echo "${YELLOW}${INFO} Please enter your Confluent Cloud credentials:${RESET}"
+	@echo "${YELLOW}${INFO} Please enter your Confluent Cloud credentials and organization ID. This will be used to create a new environment and service account.${RESET}"
 	@read -p "Confluent Cloud API Key: " API_KEY; \
 	read -p "Confluent Cloud API Secret: " API_SECRET; \
 	echo "export CONFLUENT_CLOUD_API_KEY=$$API_KEY" > .env; \
@@ -311,22 +332,41 @@ run-sql:
 	@echo "${BLUE}${ROCKET} Running Flink SQL application...${RESET}"
 	./gradlew :flink-sql:run
 
-# Start local Docker environment
-.PHONY: start-docker
-start-docker:
-	@echo "${BLUE}${ROCKET} Starting Docker environment...${RESET}"
-	docker-compose up -d
-	@echo "${GREEN}${CHECK} Docker environment started!${RESET}"
+# Docker Compose targets
+.PHONY: docker-up docker-down docker-ps docker-logs docker-restart
+
+docker-up:
+	@echo "${BLUE}${ROCKET} Starting Docker containers...${RESET}"
+	@if ! command -v docker >/dev/null 2>&1; then \
+		echo "${RED}${ERROR} Docker is not installed${RESET}"; \
+		exit 1; \
+	fi
+	docker compose up -d
+	@echo "${GREEN}${CHECK} Docker containers started successfully!${RESET}"
 	@echo "${YELLOW}${INFO} Kafka is available at localhost:29092${RESET}"
 	@echo "${YELLOW}${INFO} Schema Registry is available at http://localhost:8081${RESET}"
-	@echo "${YELLOW}${INFO} Flink Dashboard is available at http://localhost:8080${RESET}"
 
-# Stop local Docker environment
-.PHONY: stop-docker
-stop-docker:
-	@echo "${BLUE}${INFO} Stopping Docker environment...${RESET}"
-	docker-compose down
-	@echo "${GREEN}${CHECK} Docker environment stopped!${RESET}"
+docker-down:
+	@echo "${BLUE}${INFO} Stopping Docker containers...${RESET}"
+	docker compose down
+	@echo "${GREEN}${CHECK} Docker containers stopped successfully!${RESET}"
+
+docker-ps:
+	@echo "${BLUE}${INFO} Listing running Docker containers...${RESET}"
+	docker compose ps
+
+docker-logs:
+	@echo "${BLUE}${INFO} Showing Docker container logs...${RESET}"
+	@if [ -z "$(SERVICE)" ]; then \
+		docker compose logs -f; \
+	else \
+		docker compose logs -f $(SERVICE); \
+	fi
+
+docker-restart:
+	@echo "${BLUE}${ROCKET} Restarting Docker containers...${RESET}"
+	docker compose restart
+	@echo "${GREEN}${CHECK} Docker containers restarted successfully!${RESET}"
 
 # Run CI checks locally
 .PHONY: ci-checks
@@ -356,6 +396,35 @@ docker-build:
 	docker build -t flink-for-java-workshop:local .
 	@echo "${GREEN}${CHECK} Docker image built successfully!${RESET}"
 	@echo "${YELLOW}${INFO} Run with: docker run -it flink-for-java-workshop:local${RESET}"
+
+# Flink Data Generator targets
+.PHONY: build-data-generator
+build-data-generator:
+	@echo "${BLUE}${ROCKET} Building Flink Data Generator...${RESET}"
+	./gradlew :flink-data-generator:build
+	@echo "${GREEN}${CHECK} Flink Data Generator built successfully!${RESET}"
+
+.PHONY: run-data-generator-local
+run-data-generator-local:
+	@echo "${BLUE}${ROCKET} Running Flink Data Generator in local environment...${RESET}"
+	./gradlew :flink-data-generator:run --args="--env local"
+	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
+
+.PHONY: run-data-generator-cloud
+run-data-generator-cloud:
+	@echo "${BLUE}${CLOUD} Running Flink Data Generator in cloud environment...${RESET}"
+	./gradlew :flink-data-generator:run --args="--env cloud"
+	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
+
+.PHONY: run-data-generator-with-props
+run-data-generator-with-props:
+	@echo "${BLUE}${ROCKET} Running Flink Data Generator with custom properties...${RESET}"
+	@if [ -z "$(PROPS)" ]; then \
+		echo "${RED}${ERROR} Please specify properties file with PROPS=path/to/properties.${RESET}"; \
+		exit 1; \
+	fi
+	./gradlew :flink-data-generator:run --args="--properties $(PROPS)"
+	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
 
 # Clean up
 .PHONY: clean

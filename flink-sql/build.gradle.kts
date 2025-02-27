@@ -1,4 +1,4 @@
 dependencies {
     // Add SQL-specific dependencies here
-    testImplementation("org.apache.flink:flink-test-utils:1.18.1")
+    testImplementation("org.apache.flink:flink-test-utils:1.20.0")
 }

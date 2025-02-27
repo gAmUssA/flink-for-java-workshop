@@ -1,14 +1,13 @@
 package io.confluent.developer.utils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Properties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * Utility class for loading configuration properties.
@@ -17,44 +16,52 @@ public class ConfigUtils {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigUtils.class);
 
     /**
-     * Loads properties from a file.
+     * Load properties from a file.
      *
      * @param filePath Path to the properties file
-     * @return Properties object with loaded properties
+     * @return Properties object containing the loaded properties
      */
     public static Properties loadProperties(String filePath) {
         Properties properties = new Properties();
-        Path path = Paths.get(filePath);
         
-        if (!Files.exists(path)) {
-            LOG.warn("Properties file not found: {}", filePath);
-            return properties;
+        // First try to load from classpath
+        try (InputStream input = ConfigUtils.class.getClassLoader().getResourceAsStream(filePath)) {
+            if (input != null) {
+                properties.load(input);
+                LOG.info("Loaded properties from classpath: {}", filePath);
+                return properties;
+            }
+        } catch (IOException e) {
+            LOG.warn("Failed to load properties from classpath: {}", filePath, e);
         }
         
-        try (InputStream inputStream = Files.newInputStream(path)) {
-            properties.load(inputStream);
-            LOG.info("Loaded {} properties from {}", properties.size(), filePath);
-        } catch (IOException e) {
-            LOG.error("Error loading properties from {}: {}", filePath, e.getMessage(), e);
+        // Then try to load from file system
+        File file = new File(filePath);
+        if (file.exists()) {
+            try (FileInputStream input = new FileInputStream(file)) {
+                properties.load(input);
+                LOG.info("Loaded properties from file system: {}", filePath);
+                return properties;
+            } catch (IOException e) {
+                LOG.error("Failed to load properties from file system: {}", filePath, e);
+            }
+        } else {
+            LOG.warn("Properties file not found: {}", filePath);
         }
         
         return properties;
     }
     
     /**
-     * Gets a property value, with a default if not found.
+     * Get a property value with a default fallback.
      *
      * @param properties Properties object
      * @param key Property key
-     * @param defaultValue Default value if property not found
-     * @return Property value or default
+     * @param defaultValue Default value to return if the property is not found
+     * @return Property value or default value if not found
      */
     public static String getProperty(Properties properties, String key, String defaultValue) {
         String value = properties.getProperty(key);
-        if (value == null || value.trim().isEmpty()) {
-            LOG.debug("Property '{}' not found, using default: {}", key, defaultValue);
-            return defaultValue;
-        }
-        return value;
+        return value != null ? value : defaultValue;
     }
 }

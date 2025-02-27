@@ -18,7 +18,8 @@ brew "fd"           # Better find
 brew "ripgrep"      # Better grep
 
 # Terraform for infrastructure
-brew "terraform"
+tap "hashicorp/tap"
+brew "hashicorp/tap/terraform"
 
 # Kafka tools
 brew "kcat"         # Kafka cat utility

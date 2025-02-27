@@ -1,0 +1,131 @@
+= 📂 Project Structure Documentation
+:toc:
+:icons: font
+
+== 🏗️ Project Overview
+
+This project is structured as a Gradle multi-module project for Apache Flink development.
+The structure follows best practices for organizing code in a maintainable and scalable way.
+
+== 📚 Module Structure
+
+The project is organized into the following modules:
+
+=== 🧩 Common Modules
+
+These modules contain shared code used across the project:
+
+* `common:models` - Contains data models and schemas (Avro-based)
+* `common:utils` - Contains utility classes and helper functions
+
+=== 🚀 Application Modules
+
+These modules contain the main application code:
+
+* `flink-data-generator` - Contains the data generator for creating sample flight data
+* `flink-streaming` - Contains the Flink DataStream API implementation
+* `flink-sql` - Contains the Flink SQL and Table API implementation
+
+== 🛠️ Build System
+
+The project uses Gradle with Kotlin DSL for build scripts.
+The main build configuration is in the root `build.gradle.kts` file, with module-specific configurations in each module's directory.
+
+=== 📋 Key Gradle Files
+
+* `settings.gradle.kts` - Defines the project structure and included modules
+* `build.gradle.kts` - Root build file with common configuration
+* `<module>/build.gradle.kts` - Module-specific build configurations
+
+== 🧰 Development Tools
+
+=== 📝 Makefile
+
+A Makefile is provided with various targets to help with common development tasks, organized by purpose:
+
+==== Environment Setup
+* `make setup-mac` - Set up dependencies on macOS using Brewfile
+* `make setup-linux` - Set up dependencies on Linux
+* `make check-prereqs` - Check if all prerequisites are installed
+* `make update-brew-deps` - Update Homebrew dependencies
+
+==== Build & Run
+* `make build` - Build the entire project with Gradle
+* `make build-data-generator` - Build the Flink Data Generator
+* `make run-streaming` - Run the Flink Streaming application
+* `make run-sql` - Run the Flink SQL application
+* `make ci-checks` - Run CI checks locally
+
+==== Data Generator
+* `make run-data-generator-local` - Run the Flink Data Generator in local environment
+* `make run-data-generator-cloud` - Run the Flink Data Generator in cloud environment
+* `make run-data-generator-with-props` - Run with custom properties
+
+==== Docker Management
+* `make docker-up` - Start all containers
+* `make docker-down` - Stop and remove all containers
+* `make docker-restart` - Restart all containers
+* `make docker-ps` - List running containers and their status
+* `make docker-logs` - View logs (optionally for a specific service)
+* `make docker-build` - Build Docker image locally
+
+==== Terraform & Confluent Cloud
+* `make setup-terraform` - Setup Terraform for Confluent Cloud (using HashiCorp's official tap)
+* `make cc-setup` - Complete Confluent Cloud setup
+* `make cc-teardown` - Teardown Confluent Cloud infrastructure
+
+==== Cleanup
+* `make clean` - Clean up temporary files
+
+=== 🐳 Docker Environment
+
+The project includes a Docker Compose configuration for running Kafka and Schema Registry locally.
+The environment uses:
+
+* Kafka (apache/kafka:3.9.0) in KRaft mode without Zookeeper
+* Schema Registry (confluentinc/cp-schema-registry:7.9.0)
+
+Use `make docker-up` to start the environment and `make docker-down` to stop it.
+
+== 🚀 Getting Started
+
+1. Install prerequisites:
+   * Java 21 (preferably via SDKMAN)
+   * Docker (preferably OrbStack on macOS)
+   * Other tools via `make setup-mac` or `make setup-linux`
+
+2. Start the local environment:
+   * Run `make docker-up` to start Kafka and Schema Registry
+
+3. Build the project:
+   * Run `./gradlew build` or `make build`
+
+4. Generate sample data:
+   * Run `make run-data-generator-local` to generate sample flight data
+
+5. Run applications:
+   * Streaming: `make run-streaming`
+   * SQL: `make run-sql`
+
+== 📊 Project Dependencies
+
+The project uses the following key dependencies:
+
+* Apache Flink 1.20.0
+* Flink Kafka connector 3.4.0-1.20
+* Confluent Platform 7.9.0
+* JUnit 5.10.2 for testing
+* Logback 1.4.14 for logging
+
+== 🌐 Environment Support
+
+The project supports both local and cloud environments:
+
+=== Local Environment
+* Uses local Kafka and Schema Registry running in Docker
+* Configuration in `local.properties`
+
+=== Cloud Environment (Confluent Cloud)
+* Uses Confluent Cloud Kafka and Schema Registry
+* Configuration in `cloud.properties`
+* Terraform scripts for provisioning cloud resources

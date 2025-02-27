@@ -34,3 +34,9 @@
 
 - use brew for installing dependencies
 - prefer to use Brewfile for managing dependencies
+
+## Flink 
+
+use Apache Kafka® and Kafka Streams version 3.8.0+
+use Apache Flink version v 1.20
+for org.apache.flink:flink-connector-kafka dependency use version 3.4.0-1.20 <- this is correct version format 

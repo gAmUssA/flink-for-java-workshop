@@ -2,7 +2,7 @@
 #   value = data.confluent_schema_registry_cluster.advanced.rest_endpoint
 # }
 
-output "kafka_boostrap_servers" {
+output "kafka_bootstrap_servers" {
   value = replace(confluent_kafka_cluster.kafka_cluster.bootstrap_endpoint, "SASL_SSL://", "")
 }
 
