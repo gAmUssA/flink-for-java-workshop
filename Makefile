@@ -30,6 +30,15 @@ help:
 	@echo "  ${YELLOW}terraform-init${RESET}   - Initialize Terraform"
 	@echo "  ${YELLOW}terraform-plan${RESET}   - Plan Terraform changes"
 	@echo "  ${YELLOW}terraform-apply${RESET}  - Apply Terraform changes"
+	@echo "  ${YELLOW}terraform-destroy${RESET} - Destroy Terraform-managed infrastructure"
+	@echo "  ${YELLOW}terraform-output${RESET} - Generate cloud.properties from Terraform output"
+	@echo "  ${YELLOW}tf-init${RESET}          - Shorthand for terraform-init"
+	@echo "  ${YELLOW}tf-plan${RESET}          - Shorthand for terraform-plan"
+	@echo "  ${YELLOW}tf-apply${RESET}         - Shorthand for terraform-apply"
+	@echo "  ${YELLOW}tf-destroy${RESET}       - Shorthand for terraform-destroy"
+	@echo "  ${YELLOW}tf-out${RESET}           - Shorthand for terraform-output"
+	@echo "  ${YELLOW}cc-setup${RESET}         - Complete Confluent Cloud setup (init, plan, apply, output)"
+	@echo "  ${YELLOW}cc-teardown${RESET}      - Teardown Confluent Cloud infrastructure"
 	@echo "  ${YELLOW}clean${RESET}            - Clean up temporary files"
 	@echo "  ${YELLOW}check-prereqs${RESET}    - Check if all prerequisites are installed"
 	@echo "  ${YELLOW}update-brew-deps${RESET} - Update Homebrew dependencies using Brewfile"
@@ -223,12 +232,66 @@ terraform-apply:
 	@echo "${BLUE}${ROCKET} Applying Terraform changes...${RESET}"
 	cd terraform && terraform apply
 
+.PHONY: terraform-destroy
+terraform-destroy:
+	@echo "${BLUE}${WARNING} Destroying Terraform-managed infrastructure...${RESET}"
+	@echo "${YELLOW}${WARNING} This will destroy all resources created by Terraform!${RESET}"
+	@read -p "Are you sure you want to continue? (y/N) " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		cd terraform && terraform destroy --auto-approve; \
+		echo "${GREEN}${CHECK} Infrastructure destroyed!${RESET}"; \
+	else \
+		echo "${YELLOW}${INFO} Operation cancelled.${RESET}"; \
+	fi
+
 # Generate cloud.properties from Terraform output
-.PHONY: generate-cloud-properties
-generate-cloud-properties:
+.PHONY: terraform-output
+terraform-output:
 	@echo "${BLUE}${CLOUD} Generating cloud.properties from Terraform output...${RESET}"
 	cd terraform && terraform output -json | jq -r 'to_entries | map( {key: .key|tostring|split("_")|join("."), value: .value} ) | map("client.\(.key)=\(.value.value)") | .[]' > ../cloud.properties
 	@echo "${GREEN}${CHECK} cloud.properties generated!${RESET}"
+
+# Shorthand commands for Terraform operations
+.PHONY: tf-init
+tf-init: terraform-init
+
+.PHONY: tf-plan
+tf-plan: terraform-plan
+
+.PHONY: tf-apply
+tf-apply: terraform-apply
+
+.PHONY: tf-destroy
+tf-destroy: terraform-destroy
+
+.PHONY: tf-out
+tf-out: terraform-output
+
+# Complete Confluent Cloud setup
+.PHONY: cc-setup
+cc-setup:
+	@echo "${BLUE}${ROCKET} Setting up Confluent Cloud infrastructure...${RESET}"
+	@if [ ! -f .env ]; then \
+		echo "${YELLOW}${WARNING} Environment variables not set. Running setup-terraform first...${RESET}"; \
+		$(MAKE) setup-terraform; \
+	fi
+	@echo "${BLUE}${INFO} Loading environment variables...${RESET}"
+	@source .env || true
+	@echo "${BLUE}${INFO} Initializing Terraform...${RESET}"
+	@$(MAKE) terraform-init
+	@echo "${BLUE}${INFO} Planning Terraform changes...${RESET}"
+	@$(MAKE) terraform-plan
+	@echo "${BLUE}${INFO} Applying Terraform changes...${RESET}"
+	@$(MAKE) terraform-apply
+	@echo "${BLUE}${INFO} Generating cloud.properties...${RESET}"
+	@$(MAKE) terraform-output
+	@echo "${GREEN}${CHECK} Confluent Cloud setup complete!${RESET}"
+
+# Teardown Confluent Cloud infrastructure
+.PHONY: cc-teardown
+cc-teardown:
+	@echo "${BLUE}${WARNING} Tearing down Confluent Cloud infrastructure...${RESET}"
+	@$(MAKE) terraform-destroy
 
 # Build Gradle project
 .PHONY: build

@@ -9,12 +9,14 @@ Let's assume you have completed the following prereqs:
 
 == Shell Setup
 
-Log into Confluent Cloud and find the API Key and API Secret. Use the commands below to set environment variables needed to authenticate to Confluent Cloud:
+Log into Confluent Cloud and find the API Key and API Secret. 
+Use the commands below to set environment variables needed to authenticate to Confluent Cloud:
 
 ```shell
 export CONFLUENT_CLOUD_API_KEY=<API KEY>
-export CONFLUENT_CLOUD_API_SECRET<API SECRET>
+export CONFLUENT_CLOUD_API_SECRET=<API SECRET>
 ```
+
 
 == Execute Terraform Manifests
 
