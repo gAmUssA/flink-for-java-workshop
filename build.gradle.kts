@@ -8,6 +8,10 @@ plugins {
     id("com.gradleup.shadow") version "8.3.6" apply false
 }
 
+// Define versions at the root level
+val flinkVersion = "1.20.0"
+val confluentVersion = "7.9.0"
+
 allprojects {
     group = "io.confluent.developer"
     version = "1.0-SNAPSHOT"
@@ -18,13 +22,15 @@ allprojects {
             url = uri("https://packages.confluent.io/maven/")
         }
     }
+    
+    // Share versions with all projects
+    extra["flinkVersion"] = flinkVersion
+    extra["confluentVersion"] = confluentVersion
 }
 
 subprojects {
     apply(plugin = "java")
 
-    val flinkVersion = "1.20.0"
-    val confluentVersion = "7.9.0"
     val junitVersion = "5.10.2"
     val logbackVersion = "1.4.14"
     val slf4jVersion = "2.0.11"
@@ -68,9 +74,6 @@ configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink
     apply(plugin = "application")
     apply(plugin = "com.gradleup.shadow")
 
-    val flinkVersion = "1.20.0"
-    val confluentVersion = "7.9.0"
-
     dependencies {
         // Common modules
         implementation(project(":common:models"))
@@ -95,8 +98,6 @@ configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink
 // Configuration specific to the flink-sql module
 project(":flink-sql") {
     dependencies {
-        val flinkVersion = "1.20.0"
-
         // Flink Table API & SQL
         implementation("org.apache.flink:flink-table-api-java-bridge:$flinkVersion")
         implementation("org.apache.flink:flink-table-planner-loader:$flinkVersion")

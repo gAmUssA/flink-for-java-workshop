@@ -5,8 +5,8 @@ plugins {
     id("com.gradleup.shadow")
 }
 
-val flinkVersion = "1.20.0"
-val confluentVersion = "7.9.0"
+val flinkVersion = rootProject.extra["flinkVersion"] as String
+val confluentVersion = rootProject.extra["confluentVersion"] as String
 val datafakerVersion = "2.1.0"
 
 dependencies {

@@ -1,4 +1,6 @@
+val flinkVersion = rootProject.extra["flinkVersion"] as String
+
 dependencies {
     // Add SQL-specific dependencies here
-    testImplementation("org.apache.flink:flink-test-utils:1.20.0")
+    testImplementation("org.apache.flink:flink-test-utils:$flinkVersion")
 }
