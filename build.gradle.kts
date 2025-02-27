@@ -33,7 +33,7 @@ subprojects {
 
     val junitVersion = "5.10.2"
     val logbackVersion = "1.4.14"
-    val slf4jVersion = "2.0.11"
+    val slf4jVersion = "2.0.17"
 
     dependencies {
         // Logging
