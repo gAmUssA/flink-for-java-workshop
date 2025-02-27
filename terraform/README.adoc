@@ -18,7 +18,8 @@ export CONFLUENT_CLOUD_API_SECRET<API SECRET>
 
 == Execute Terraform Manifests
 
-The terraform manifests require the Confluent Cloud organization ID in order to provision infrastructure. This can be found in the Confluent Cloud console in the "Organization Settings" and exported to an environment variable:
+The terraform manifests require the Confluent Cloud organization ID in order to provision infrastructure. 
+This can be found in the Confluent Cloud console in the "Organization Settings" and exported to an environment variable:
 
 ```bash
 export TF_VAR_org_id=<ORG ID VALUE FROM CONSOLE>
@@ -42,7 +43,8 @@ Once completed, verify the infrastructure is created in the Confluent Cloud cons
 
 == Using Infrastructure in the Workshop
 
-In the Table API exercises, we'll need API keys and secrets to connect Flink to Confluent Cloud. This `terraform output` command will create a file with those parameters:
+In the Table API exercises, we will need API keys and secrets to connect Flink to Confluent Cloud. 
+This `terraform output` command will create a file with those parameters:
 
 ```bash
 terraform output -json \

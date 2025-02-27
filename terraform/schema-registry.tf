@@ -19,7 +19,7 @@ resource "confluent_role_binding" "sr_manager_data_steward" {
   role_name   = "DataSteward"
   crn_pattern = confluent_environment.cc_env.resource_name
 
-  depends_on = [ data.confluent_schema_registry_cluster.advanced ]
+  depends_on = [data.confluent_schema_registry_cluster.advanced]
 }
 
 resource "confluent_api_key" "sr_manager_kafka_api_key" {

@@ -1,18 +1,16 @@
-
-
 resource "confluent_flink_compute_pool" "main_flink_pool" {
-  display_name     = "main_flink_pool"
-  cloud            = var.cloud_provider
-  region           = var.cloud_region
-  max_cfu          = 5
+  display_name = "main_flink_pool"
+  cloud        = var.cloud_provider
+  region       = var.cloud_region
+  max_cfu      = 5
   environment {
     id = confluent_environment.cc_env.id
   }
 }
 
 data "confluent_flink_region" "main_flink_region" {
-  cloud            = var.cloud_provider
-  region           = var.cloud_region
+  cloud  = var.cloud_provider
+  region = var.cloud_region
 }
 
 resource "confluent_service_account" "flink_developer" {
@@ -25,7 +23,7 @@ resource "confluent_role_binding" "fd_flink_developer" {
   role_name   = "FlinkDeveloper"
   crn_pattern = confluent_environment.cc_env.resource_name
 
-  depends_on = [ confluent_flink_compute_pool.main_flink_pool]
+  depends_on = [confluent_flink_compute_pool.main_flink_pool]
 }
 
 resource "confluent_role_binding" "fd_kafka_write" {
@@ -33,7 +31,7 @@ resource "confluent_role_binding" "fd_kafka_write" {
   role_name   = "DeveloperWrite"
   crn_pattern = "${confluent_kafka_cluster.kafka_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.kafka_cluster.id}/topic=*"
 
-  depends_on = [ confluent_kafka_cluster.kafka_cluster]
+  depends_on = [confluent_kafka_cluster.kafka_cluster]
 }
 
 resource "confluent_role_binding" "fd_kafka_read" {
@@ -41,7 +39,7 @@ resource "confluent_role_binding" "fd_kafka_read" {
   role_name   = "DeveloperRead"
   crn_pattern = "${confluent_kafka_cluster.kafka_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.kafka_cluster.id}/topic=*"
 
-  depends_on = [ confluent_kafka_cluster.kafka_cluster]
+  depends_on = [confluent_kafka_cluster.kafka_cluster]
 }
 
 resource "confluent_role_binding" "fd_schema_registry_write" {
