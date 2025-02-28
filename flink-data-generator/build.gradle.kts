@@ -7,7 +7,7 @@ plugins {
 
 val flinkVersion = rootProject.extra["flinkVersion"] as String
 val confluentVersion = rootProject.extra["confluentVersion"] as String
-val datafakerVersion = "2.1.0"
+val datafakerVersion = "2.4.2"
 
 dependencies {
     // Common modules
