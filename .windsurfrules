@@ -23,6 +23,7 @@
 
 - use asciidoc (*.adoc) for documentation and use emoji for better readability
 - use one sentence per line in asciidoc
+- PRD (Product Requirements Document) should be written in asciidoc
 
 ## Git and Github
 
