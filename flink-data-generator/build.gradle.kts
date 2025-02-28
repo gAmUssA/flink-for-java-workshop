@@ -22,6 +22,7 @@ dependencies {
     implementation("org.apache.flink:flink-connector-kafka:3.4.0-1.20")
     implementation("org.apache.flink:flink-avro:$flinkVersion")
     implementation("org.apache.flink:flink-connector-base:$flinkVersion")
+    implementation("org.apache.flink:flink-core:$flinkVersion")
     
     // Confluent
     implementation("io.confluent:kafka-schema-registry-client:$confluentVersion")

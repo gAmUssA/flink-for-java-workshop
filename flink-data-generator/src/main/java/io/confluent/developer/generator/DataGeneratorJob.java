@@ -3,7 +3,6 @@ package io.confluent.developer.generator;
 import io.confluent.developer.models.flight.Flight;
 import io.confluent.developer.serialization.FlightAvroSerializationSchema;
 import io.confluent.developer.utils.ConfigUtils;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.sink.KafkaSinkBuilder;
@@ -11,7 +10,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.Properties;
 
 /**
