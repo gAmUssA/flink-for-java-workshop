@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     // Add model-specific dependencies here
-    implementation("org.apache.avro:avro:1.11.3")
+    implementation("org.apache.avro:avro:1.12.0")
     
     // Test dependencies
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
