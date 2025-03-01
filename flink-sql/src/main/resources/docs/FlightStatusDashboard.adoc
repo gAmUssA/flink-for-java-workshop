@@ -1,0 +1,86 @@
+= Flight Status Dashboard Use Case
+:toc:
+:icons: font
+:source-highlighter: highlightjs
+
+== Overview 🌟
+
+The Flight Status Dashboard demonstrates real-time monitoring of flight statuses using Flink's Table API.
+This use case showcases stateless stream processing by grouping flights by their status and counting them in real-time.
+
+== Features ✈️
+
+* Group flights by status (on-time, delayed, canceled, etc.)
+* Calculate the count of flights in each status category
+* Update the dashboard in real-time as new data arrives
+
+== Implementation Details 🔧
+
+The implementation uses the Table API to create a dynamic table from a Kafka source with Avro-formatted flight data.
+It processes incoming flight records by grouping them according to their status field and counting the number of flights in each group.
+
+== Sample Output 📊
+
+[source]
+----
++-------------+-------+
+|    Status   | Count |
++-------------+-------+
+| ON_TIME     |  127  |
+| DELAYED     |   43  |
+| CANCELLED   |   12  |
+| DIVERTED    |    3  |
+| IN_AIR      |   78  |
++-------------+-------+
+----
+
+== Table API Example 💻
+
+The core implementation using the Table API:
+
+[source,java]
+----
+Table statusDashboard = tableEnv.from("flight_source")
+    .groupBy($("status"))
+    .select(
+        $("status"),
+        $("status").count().as("count")
+    );
+----
+
+== Alternative SQL Query 📝
+
+The equivalent SQL implementation:
+
+[source,sql]
+----
+SELECT status, COUNT(*) AS count 
+FROM flight_source 
+GROUP BY status
+----
+
+== Running the Example 🚀
+
+=== Prerequisites
+
+* Apache Flink 1.20.0 installed
+* Kafka running with the flight data topic
+* Flight data in Avro format being published to Kafka
+
+=== Command
+
+[source,bash]
+----
+# Run just the Flight Status Dashboard use case
+java -jar flink-sql.jar status [local|cloud] [topic_name]
+
+# Default values will be used if parameters are omitted
+# - Environment: local
+# - Topic: flights
+----
+
+== Key Benefits 🎯
+
+* **Real-time Insights**: Immediate visibility into the current distribution of flight statuses
+* **Simple Implementation**: Demonstrates the power of Flink's Table API with minimal code
+* **Operational Value**: Provides valuable information for airport operations and airline staff

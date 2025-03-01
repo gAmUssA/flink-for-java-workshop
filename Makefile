@@ -45,6 +45,16 @@ help:
 	@echo "${BLUE}${INFO} ☁️ run-data-generator-cloud${RESET} - Run the Flink Data Generator in cloud environment"
 	@echo "${BLUE}${INFO} 🚀 run-data-generator-with-props${RESET} - Run with custom properties (PROPS=path/to/properties)"
 	@echo ""
+	@echo "${YELLOW}${STAR} Flink SQL with Table API:${RESET}"
+	@echo "${BLUE}${INFO} 🚀 run-sql-status-local${RESET}  - Run Flight Status Dashboard locally"
+	@echo "${BLUE}${INFO} 🚀 run-sql-routes-local${RESET}  - Run Flight Route Analytics locally"
+	@echo "${BLUE}${INFO} 🚀 run-sql-delays-local${RESET}  - Run Airline Delay Analytics locally"
+	@echo "${BLUE}${INFO} 🚀 run-sql-all-local${RESET}     - Run all SQL use cases locally"
+	@echo "${BLUE}${INFO} ☁️ run-sql-status-cloud${RESET}  - Run Flight Status Dashboard on cloud"
+	@echo "${BLUE}${INFO} ☁️ run-sql-routes-cloud${RESET}  - Run Flight Route Analytics on cloud"
+	@echo "${BLUE}${INFO} ☁️ run-sql-delays-cloud${RESET}  - Run Airline Delay Analytics on cloud"
+	@echo "${BLUE}${INFO} ☁️ run-sql-all-cloud${RESET}     - Run all SQL use cases on cloud"
+	@echo ""
 	@echo "${YELLOW}${STAR} Docker Management:${RESET}"
 	@echo "${BLUE}${INFO} 🐳 docker-up${RESET}          - Start all containers"
 	@echo "${BLUE}${INFO} 🐳 docker-down${RESET}        - Stop and remove all containers"
@@ -331,6 +341,55 @@ run-streaming:
 run-sql:
 	@echo "${BLUE}${ROCKET} Running Flink SQL application...${RESET}"
 	./gradlew :flink-sql:run
+
+# Flink SQL Module with Table API
+.PHONY: run-sql-status-local
+run-sql-status-local:
+	@echo "${BLUE}${ROCKET} Running Flight Status Dashboard with Table API (local)...${RESET}"
+	./gradlew :flink-sql:run --args="status local"
+	@echo "${GREEN}${CHECK} Flight Status Dashboard completed!${RESET}"
+
+.PHONY: run-sql-routes-local
+run-sql-routes-local:
+	@echo "${BLUE}${ROCKET} Running Flight Route Analytics with Table API (local)...${RESET}"
+	./gradlew :flink-sql:run --args="routes local"
+	@echo "${GREEN}${CHECK} Flight Route Analytics completed!${RESET}"
+
+.PHONY: run-sql-delays-local
+run-sql-delays-local:
+	@echo "${BLUE}${ROCKET} Running Airline Delay Analytics with Table API (local)...${RESET}"
+	./gradlew :flink-sql:run --args="delays local"
+	@echo "${GREEN}${CHECK} Airline Delay Analytics completed!${RESET}"
+
+.PHONY: run-sql-all-local
+run-sql-all-local:
+	@echo "${BLUE}${ROCKET} Running all SQL use cases with Table API (local)...${RESET}"
+	./gradlew :flink-sql:run --args="all local"
+	@echo "${GREEN}${CHECK} All SQL use cases completed!${RESET}"
+
+.PHONY: run-sql-status-cloud
+run-sql-status-cloud:
+	@echo "${BLUE}${CLOUD} Running Flight Status Dashboard with Table API (cloud)...${RESET}"
+	./gradlew :flink-sql:run --args="status cloud"
+	@echo "${GREEN}${CHECK} Flight Status Dashboard completed!${RESET}"
+
+.PHONY: run-sql-routes-cloud
+run-sql-routes-cloud:
+	@echo "${BLUE}${CLOUD} Running Flight Route Analytics with Table API (cloud)...${RESET}"
+	./gradlew :flink-sql:run --args="routes cloud"
+	@echo "${GREEN}${CHECK} Flight Route Analytics completed!${RESET}"
+
+.PHONY: run-sql-delays-cloud
+run-sql-delays-cloud:
+	@echo "${BLUE}${CLOUD} Running Airline Delay Analytics with Table API (cloud)...${RESET}"
+	./gradlew :flink-sql:run --args="delays cloud"
+	@echo "${GREEN}${CHECK} Airline Delay Analytics completed!${RESET}"
+
+.PHONY: run-sql-all-cloud
+run-sql-all-cloud:
+	@echo "${BLUE}${CLOUD} Running all SQL use cases with Table API (cloud)...${RESET}"
+	./gradlew :flink-sql:run --args="all cloud"
+	@echo "${GREEN}${CHECK} All SQL use cases completed!${RESET}"
 
 # Docker Compose targets
 .PHONY: docker-up docker-down docker-ps docker-logs docker-restart

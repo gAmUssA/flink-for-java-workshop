@@ -1,0 +1,141 @@
+= Flight Route Analytics Use Case
+:toc:
+:icons: font
+:source-highlighter: highlightjs
+
+== Overview 🌟
+
+The Flight Route Analytics use case demonstrates how to analyze flight routes to identify popular origin-destination pairs and airline service patterns.
+This use case showcases stateless stream processing with Flink's Table API, helping stakeholders understand route frequency and airline coverage.
+
+== Features 🗺️
+
+* Identify popular routes by counting flights between origin and destination pairs
+* Determine which airlines service which routes most frequently
+* Provide insights into route popularity for better resource allocation
+
+== Implementation Details 🔧
+
+The implementation processes flight records by:
+
+1. **Route Popularity Analysis**:
+   * Group flights by origin and destination
+   * Count the number of flights for each route
+   * Order results by frequency to highlight the most popular routes
+
+2. **Airline Route Coverage Analysis**:
+   * Group flights by airline, origin, and destination
+   * Count the number of flights for each airline-route combination
+   * Order results to show each airline's most frequently serviced routes
+
+== Sample Output 📊
+
+=== Route Popularity
+
+[source]
+----
++---------+-------------+-------------+
+|  Origin | Destination | Flight Count|
++---------+-------------+-------------+
+|   LAX   |     JFK     |     157     |
+|   ORD   |     DFW     |     143     |
+|   SFO   |     SEA     |     112     |
+|   ATL   |     MIA     |      98     |
+|   ...   |     ...     |     ...     |
++---------+-------------+-------------+
+----
+
+=== Airline Route Coverage
+
+[source]
+----
++----------+---------+-------------+-------------+
+|  Airline |  Origin | Destination | Flight Count|
++----------+---------+-------------+-------------+
+| Delta    |   ATL   |     LAX     |      42     |
+| Delta    |   JFK   |     SFO     |      38     |
+| United   |   ORD   |     DEN     |      56     |
+| American |   DFW   |     MIA     |      31     |
+|   ...    |   ...   |     ...     |     ...     |
++----------+---------+-------------+-------------+
+----
+
+== Table API Examples 💻
+
+=== Route Popularity Implementation
+
+[source,java]
+----
+Table routePopularity = tableEnv.from("flight_source")
+    .groupBy($("origin"), $("destination"))
+    .select(
+        $("origin"),
+        $("destination"),
+        $("origin").count().as("flight_count")
+    )
+    .orderBy($("flight_count").desc());
+----
+
+=== Airline Route Coverage Implementation
+
+[source,java]
+----
+Table airlineRoutes = tableEnv.from("flight_source")
+    .groupBy($("airline"), $("origin"), $("destination"))
+    .select(
+        $("airline"),
+        $("origin"),
+        $("destination"),
+        $("airline").count().as("flight_count")
+    )
+    .orderBy($("airline"), $("flight_count").desc());
+----
+
+== Alternative SQL Queries 📝
+
+=== Route Popularity SQL
+
+[source,sql]
+----
+SELECT origin, destination, COUNT(*) AS flight_count 
+FROM flight_source 
+GROUP BY origin, destination 
+ORDER BY flight_count DESC
+----
+
+=== Airline Route Coverage SQL
+
+[source,sql]
+----
+SELECT airline, origin, destination, COUNT(*) AS flight_count 
+FROM flight_source 
+GROUP BY airline, origin, destination 
+ORDER BY airline, flight_count DESC
+----
+
+== Running the Example 🚀
+
+=== Prerequisites
+
+* Apache Flink 1.20.0 installed
+* Kafka running with the flight data topic
+* Flight data in Avro format being published to Kafka
+
+=== Command
+
+[source,bash]
+----
+# Run just the Flight Route Analytics use case
+java -jar flink-sql.jar routes [local|cloud] [topic_name]
+
+# Default values will be used if parameters are omitted
+# - Environment: local
+# - Topic: flights
+----
+
+== Key Benefits 🎯
+
+* **Network Planning**: Helps airlines identify profitable routes and optimize their networks
+* **Resource Allocation**: Enables airports to allocate resources based on route popularity
+* **Competitive Analysis**: Provides insights into which airlines dominate specific routes
+* **Strategic Decision Making**: Supports data-driven decisions about new routes or service increases

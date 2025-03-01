@@ -1,0 +1,184 @@
+= Flink SQL Module with Table API and Confluent Avro Integration
+:toc:
+:icons: font
+:source-highlighter: highlightjs
+:sectlinks:
+
+== Overview 🌟
+
+The `flink-sql` module demonstrates the power of Flink's Table API using Java to process flight data from a Kafka topic.
+This module showcases various use cases for analyzing flight information using Apache Flink 1.20 with the Table API, focusing on both stateless stream processing and analytical queries.
+
+The implementation handles data in Avro format with Confluent Schema Registry integration, based on the Flight schema defined in `common/models/src/main/avro/flight.avsc`.
+The module uses the latest Flink dependencies (version 1.20.0) with the Flink Kafka connector version 3.4.0-1.20 as specified in project requirements.
+
+== File Structure 📂
+
+[source]
+----
+flink-sql/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── io/
+│   │   │       └── confluent/
+│   │   │           └── developer/
+│   │   │               └── sql/
+│   │   │                   ├── FlinkSqlMain.java (Entry point)
+│   │   │                   ├── table/
+│   │   │                   │   ├── FlightTableApiFactory.java (Table API implementation)
+│   │   │                   │   ├── FlightTableFactory.java (Legacy implementation)
+│   │   │                   │   ├── KafkaSourceBuilder.java (Kafka source utilities)
+│   │   │                   │   └── AvroTableUtils.java (Avro utilities)
+│   │   │                   ├── usecases/
+│   │   │                   │   ├── FlightStatusDashboard.java (Use Case 1)
+│   │   │                   │   ├── FlightRouteAnalytics.java (Use Case 2)
+│   │   │                   │   └── AirlineDelayAnalytics.java (Use Case 3)
+│   │   │                   └── config/
+│   │   │                       └── ConfigLoader.java (Configuration)
+│   │   └── resources/
+│   │       ├── kafka-local.properties (Local environment config)
+│   │       └── kafka-cloud.properties (Confluent Cloud config)
+│   └── test/ (Tests for each component)
+└── build.gradle.kts (Dependencies)
+----
+
+== Key Features 🔑
+
+* **Flink Table API**: Uses the Java builder pattern for table and schema definitions instead of SQL strings
+* **Confluent Avro Format**: Integrates with Confluent Schema Registry for schema evolution
+* **Environment Support**: Configurable for both local development and Confluent Cloud environments
+* **Real-time Analytics**: Provides streaming analytics on flight data
+
+== Use Cases 🚀
+
+The module implements three primary use cases:
+
+=== 1. Real-time Flight Status Dashboard ✈️
+
+*Purpose*: Create a real-time monitoring dashboard that categorizes flights by their status.
+
+*Implementation*: Uses Table API to group flights by status and count occurrences.
+
+*Sample Output*:
+[source]
+----
++--------+-------------+
+| status | flight_count|
++--------+-------------+
+| ON_TIME|          42 |
+| DELAYED|          15 |
+| LANDED |          23 |
++--------+-------------+
+----
+
+=== 2. Flight Route Analytics 🗺️
+
+*Purpose*: Analyze the popularity of flight routes to identify high-traffic corridors.
+
+*Implementation*: Uses Table API to group flights by origin and destination, counting occurrences.
+
+*Sample Output*:
+[source]
+----
++--------+-------------+-------+
+| origin | destination | count |
++--------+-------------+-------+
+| JFK    | LAX         |    32 |
+| ORD    | SFO         |    28 |
+| ATL    | DFW         |    45 |
++--------+-------------+-------+
+----
+
+=== 3. Airline Delay Performance Analysis ⏱️
+
+*Purpose*: Evaluate airline performance by analyzing departure delays.
+
+*Implementation*: Uses Table API to calculate average and maximum delays per airline.
+
+*Sample Output*:
+[source]
+----
++---------+----------+----------+-------------+
+| airline | avgDelay | maxDelay | flightCount |
++---------+----------+----------+-------------+
+| Delta   |       12 |       45 |          32 |
+| United  |       18 |       60 |          28 |
+| American|        8 |       30 |          45 |
++---------+----------+----------+-------------+
+----
+
+== Schema Registry Integration 📊
+
+The module integrates with Confluent Schema Registry using the `avro-confluent` format in the Table API:
+
+[source,java]
+----
+TableDescriptor tableDescriptor = TableDescriptor.forConnector("kafka")
+    .schema(schema)
+    .option("topic", topic)
+    .option("properties.bootstrap.servers", bootstrapServers)
+    .option("scan.startup.mode", "earliest-offset")
+    .option("format", "avro-confluent")
+    .option("avro-confluent.schema-registry.url", schemaRegistryUrl);
+----
+
+== Running the Application 🏃‍♂️
+
+=== Prerequisites
+
+* Java 21
+* Apache Kafka (local or Confluent Cloud)
+* Confluent Schema Registry (local or Confluent Cloud)
+
+=== Local Environment
+
+1. Start Kafka and Schema Registry using the provided docker-compose file:
++
+[source,bash]
+----
+make docker-up
+----
+
+2. Run the application with the local environment:
++
+[source,bash]
+----
+./gradlew :flink-sql:run --args="all local"
+----
+
+=== Confluent Cloud Environment
+
+1. Set the required environment variables:
++
+[source,bash]
+----
+export BOOTSTRAP_SERVERS="your-bootstrap-servers"
+export CONFLUENT_API_KEY="your-api-key"
+export CONFLUENT_API_SECRET="your-api-secret"
+export SCHEMA_REGISTRY_URL="your-schema-registry-url"
+export SCHEMA_REGISTRY_API_KEY="your-schema-registry-api-key"
+export SCHEMA_REGISTRY_API_SECRET="your-schema-registry-api-secret"
+----
+
+2. Run the application with the cloud environment:
++
+[source,bash]
+----
+./gradlew :flink-sql:run --args="all cloud"
+----
+
+== Configuration ⚙️
+
+The application uses two property files for configuration:
+
+* `kafka-local.properties`: Configuration for local development
+* `kafka-cloud.properties`: Configuration for Confluent Cloud with environment variable placeholders
+
+== Dependencies 📚
+
+* Apache Flink 1.20.0
+* Flink Kafka Connector 3.4.0-1.20
+* Flink Avro 1.20.0
+* Flink Avro Confluent Registry 1.20.0
+* Confluent Platform 7.9.0

@@ -1,0 +1,442 @@
+= Apache Flink Table API with Confluent Schema Registry Integration
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+== Overview
+
+This document outlines the technical requirements for implementing SQL-like use cases using Apache Flink's Java Table API with Confluent Schema Registry integration. It serves as a guide for developers building stream processing applications that require data schema management.
+
+== Core Dependencies
+
+[source,kotlin]
+----
+// build.gradle.kts
+plugins {
+    kotlin("jvm") version "1.9.21"
+    application
+}
+
+repositories {
+    mavenCentral()
+    // Ensure Confluent's maven repository is included
+    maven {
+        url = uri("https://packages.confluent.io/maven/")
+    }
+}
+
+val flinkVersion = "1.20.0"
+
+dependencies {
+    // Core Flink Dependencies
+    implementation("org.apache.flink:flink-java:$flinkVersion")
+    implementation("org.apache.flink:flink-streaming-java:$flinkVersion")
+    implementation("org.apache.flink:flink-table-api-java-bridge:$flinkVersion")
+    
+    // Kafka Connector - using the latest 3.3.0-1.20 version
+    implementation("org.apache.flink:flink-connector-kafka:3.3.0-1.20")
+    
+    // Schema Registry Integration
+    implementation("org.apache.flink:flink-avro:$flinkVersion")
+    implementation("org.apache.flink:flink-avro-confluent-registry:$flinkVersion")
+    
+    // Runtime
+    implementation("org.apache.flink:flink-clients:$flinkVersion")
+    implementation("org.apache.flink:flink-runtime-web:$flinkVersion")
+    
+    // Add Avro support
+    implementation("org.apache.avro:avro:1.11.3")
+}
+----
+
+== Technical Requirements
+
+=== Environment Setup
+
+The application should initialize the Flink environment using Java builders rather than SQL strings:
+
+[source,java]
+----
+// For pure table programs
+TableEnvironment tEnv = TableEnvironment.create(
+    EnvironmentSettings.newInstance().build());
+
+// For stream integration
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+StreamTableEnvironment streamTableEnv = StreamTableEnvironment.create(env);
+----
+
+=== Schema Definition
+
+Schemas must be defined programmatically using the Schema builder API:
+
+[source,java]
+----
+Schema schema = Schema.newBuilder()
+    .column("user_id", DataTypes.STRING())
+    .column("item_id", DataTypes.STRING())
+    .column("behavior", DataTypes.STRING())
+    .column("ts", DataTypes.TIMESTAMP(3))
+    .watermark("ts", "ts - INTERVAL '5' SECOND")
+    .build();
+----
+
+=== Table Creation
+
+Tables should be created using the TableDescriptor builder API:
+
+[source,java]
+----
+tableEnv.createTemporaryTable("user_behavior", 
+    TableDescriptor.forConnector("kafka")
+        .schema(schema)
+        .option("topic", "user-behavior")
+        .option("properties.bootstrap.servers", "localhost:9092")
+        .option("properties.group.id", "flink-consumer")
+        .option("scan.startup.mode", "earliest-offset")
+        .option("format", "avro-confluent")
+        .option("avro-confluent.schema-registry.url", "http://schema-registry:8081")
+        .option("avro-confluent.schema-registry.subject", "user-behavior-value")
+        .build());
+----
+
+=== Query Operations
+
+Queries should use Java expression-based operations instead of SQL strings:
+
+[source,java]
+----
+Table userBehavior = tableEnv.from("user_behavior");
+
+Table filteredBehavior = userBehavior
+    .filter(
+        $("behavior").isEqual("purchase")
+        .and($("category").isEqual("electronics"))
+    )
+    .groupBy($("item_id"))
+    .select(
+        $("item_id"), 
+        $("item_id").count().as("purchase_count")
+    );
+----
+
+=== Schema Registry Integration
+
+==== Required Configuration
+
+All Kafka sources and sinks that use Avro format with Schema Registry must include these configurations:
+
+[source,java]
+----
+// For value format (required)
+.option("format", "avro-confluent")  // or "value.format" = "avro-confluent"
+.option("avro-confluent.schema-registry.url", "http://schema-registry:8081")
+.option("avro-confluent.schema-registry.subject", "{topic-name}-value")
+
+// For key format (optional)
+.option("key.format", "avro-confluent")
+.option("key.avro-confluent.schema-registry.url", "http://schema-registry:8081")
+.option("key.avro-confluent.schema-registry.subject", "{topic-name}-key")
+----
+
+==== Example Table with Key and Value Formats
+
+[source,java]
+----
+tableEnv.executeSql(
+    "CREATE TABLE user_created (" +
+    "  kafka_key_id STRING," +
+    "  id STRING," +
+    "  name STRING," +
+    "  email STRING" +
+    ") WITH (" +
+    "  'connector' = 'kafka'," +
+    "  'topic' = 'user_events'," +
+    "  'properties.bootstrap.servers' = 'localhost:9092'," +
+    "  'key.format' = 'avro-confluent'," +
+    "  'key.avro-confluent.url' = 'http://localhost:8082'," +
+    "  'key.fields' = 'kafka_key_id'," +
+    "  'key.fields-prefix' = 'kafka_key_'," +
+    "  'value.format' = 'avro-confluent'," +
+    "  'value.avro-confluent.url' = 'http://localhost:8082'," +
+    "  'value.fields-include' = 'EXCEPT_KEY'," +
+    "  'value.avro-confluent.subject' = 'user_events-value'" +
+    ")");
+----
+
+Using the builder pattern:
+
+[source,java]
+----
+Schema schema = Schema.newBuilder()
+    .column("kafka_key_id", DataTypes.STRING())
+    .column("id", DataTypes.STRING())
+    .column("name", DataTypes.STRING())
+    .column("email", DataTypes.STRING())
+    .build();
+
+tableEnv.createTable("user_created", 
+    TableDescriptor.forConnector("kafka")
+        .schema(schema)
+        .option("topic", "user_events")
+        .option("properties.bootstrap.servers", "localhost:9092")
+        .option("key.format", "avro-confluent")
+        .option("key.avro-confluent.url", "http://localhost:8082")
+        .option("key.fields", "kafka_key_id")
+        .option("key.fields-prefix", "kafka_key_")
+        .option("value.format", "avro-confluent")
+        .option("value.avro-confluent.url", "http://localhost:8082")
+        .option("value.fields-include", "EXCEPT_KEY")
+        .option("value.avro-confluent.subject", "user_events-value")
+        .build());
+----
+
+==== Avro-Confluent Format Options
+
+[cols="1,1,1,1,3"]
+|===
+|Option |Required |Default |Type |Description
+
+|avro-confluent.schema-registry.url
+|Required
+|-
+|String
+|The URL of the Confluent Schema Registry
+
+|avro-confluent.schema-registry.subject
+|Optional
+|{topic-name}-value or {topic-name}-key
+|String
+|The subject name to register or look up the schema
+
+|avro-confluent.basic-auth.credentials-source
+|Optional
+|-
+|String
+|Basic auth credentials source for Schema Registry
+
+|avro-confluent.basic-auth.user-info
+|Optional
+|-
+|String
+|Basic auth user info for Schema Registry
+
+|avro-confluent.bearer-auth.credentials-source
+|Optional
+|-
+|String
+|Bearer auth credentials source for Schema Registry
+
+|avro-confluent.bearer-auth.token
+|Optional
+|-
+|String
+|Bearer auth token for Schema Registry
+
+|avro-confluent.properties
+|Optional
+|-
+|Map
+|Additional properties for Schema Registry client
+
+|avro-confluent.ssl.keystore.location
+|Optional
+|-
+|String
+|Location of the keystore file
+
+|avro-confluent.ssl.keystore.password
+|Optional
+|-
+|String
+|Password for the keystore
+
+|avro-confluent.ssl.truststore.location
+|Optional
+|-
+|String
+|Location of the truststore file
+
+|avro-confluent.ssl.truststore.password
+|Optional
+|-
+|String
+|Password for the truststore
+|===
+
+==== Security Configuration
+
+For secure Schema Registry connections:
+
+[source,java]
+----
+// Basic Auth example
+.option("avro-confluent.basic-auth.credentials-source", "USER_INFO")
+.option("avro-confluent.basic-auth.user-info", "username:password")
+
+// SSL example
+.option("avro-confluent.ssl.truststore.location", "/path/to/kafka.client.truststore.jks")
+.option("avro-confluent.ssl.truststore.password", "test1234")
+.option("avro-confluent.ssl.keystore.location", "/path/to/kafka.client.keystore.jks")
+.option("avro-confluent.ssl.keystore.password", "test1234")
+----
+
+== Design Patterns
+
+=== Key and Value Format Handling
+
+When working with both key and value formats:
+
+[source,java]
+----
+// Use field prefixes to avoid name conflicts
+.option("key.fields", "user_id;item_id")
+.option("key.fields-prefix", "k_")
+.option("value.fields-include", "EXCEPT_KEY")
+----
+
+This approach allows:
+
+1. Unique field names when key and value schemas contain fields with the same name
+2. Control over which fields are included in the key vs value format
+
+=== Working with CDC Data Sources
+
+To use Kafka as a CDC (Change Data Capture) changelog source:
+
+[source,java]
+----
+tableEnv.executeSql(
+    "CREATE TABLE products_cdc (" +
+    "  id INT," +
+    "  name STRING," +
+    "  description STRING," +
+    "  weight DECIMAL(10,2)," +
+    "  event_time TIMESTAMP_LTZ(3) METADATA FROM 'value.source.timestamp' VIRTUAL," +
+    "  origin_table STRING METADATA FROM 'value.source.table' VIRTUAL," +
+    "  partition_id BIGINT METADATA FROM 'partition' VIRTUAL" +
+    ") WITH (" +
+    "  'connector' = 'kafka'," +
+    "  'topic' = 'products'," +
+    "  'properties.bootstrap.servers' = 'localhost:9092'," +
+    "  'value.format' = 'debezium-json'," +
+    "  'value.debezium-json.schema-include' = 'true'" +
+    ")");
+----
+
+=== Stream & Table Integration
+
+For complex processing requirements, integrate DataStream and Table APIs:
+
+[source,java]
+----
+// Convert DataStream to Table
+DataStream<UserEvent> userEventStream = ...;
+Table userEventTable = streamTableEnv.fromDataStream(
+    userEventStream,
+    Schema.newBuilder()
+        .columnByExpression("user_id", "$f0.userId")
+        .columnByExpression("event_type", "$f0.eventType")
+        .columnByExpression("event_time", "$f0.eventTime")
+        .build());
+
+// Process with Table API
+Table resultTable = userEventTable
+    .groupBy($("user_id"), $("event_type"))
+    .select($("user_id"), $("event_type"), $("event_type").count().as("event_count"));
+
+// Convert back to DataStream
+DataStream<Row> resultStream = streamTableEnv.toDataStream(resultTable);
+----
+
+== Best Practices
+
+[cols="1,3"]
+|===
+|Practice |Description
+
+|Use Specific Avro Records
+|Prefer strongly-typed specific Avro classes over GenericRecord for type safety and readability
+
+|Type-Safe Expressions
+|Use static imports for expressions (`$("column_name")`) for IDE support and compile-time checking
+
+|Schema Evolution Planning
+|Understand compatibility rules (BACKWARD, FORWARD, FULL) and design schemas accordingly.
+Note that schema evolution in Kafka keys is particularly challenging due to hash partitioning.
+
+|Exactly-Once Processing
+|Enable checkpointing for reliable processing: `env.enableCheckpointing(60000)`
+
+|Performance Tuning
+|Configure mini-batch processing and state TTL for optimal performance
+
+|Field Prefixes
+|Use key.fields-prefix to avoid naming conflicts when key and value schemas have overlapping field names
+
+|Schema Subject Naming
+|Follow the standard naming convention: `{topic-name}-key` and `{topic-name}-value`
+|===
+
+[WARNING]
+====
+Always test schema evolution pathways thoroughly in a development environment before deployment to production.
+Schema evolution in the context of a Kafka key is almost never backward or forward compatible due to hash partitioning.
+====
+
+== Example Implementation Pattern
+
+A complete implementation should follow this pattern:
+
+[source,java]
+----
+public class FlinkTableApiWithSchemaRegistry {
+    public static void main(String[] args) throws Exception {
+        // 1. Set up environments
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
+        
+        // 2. Enable checkpointing
+        env.enableCheckpointing(60000);
+        
+        // 3. Define schemas using builders
+        Schema sourceSchema = Schema.newBuilder()
+            // Define columns and watermarks
+            .build();
+            
+        // 4. Create source and sink tables with Schema Registry integration
+        tableEnv.createTemporaryTable("source_table", 
+            TableDescriptor.forConnector("kafka")
+                .schema(sourceSchema)
+                .option("topic", "source-topic")
+                .option("properties.bootstrap.servers", "kafka:9092")
+                .option("format", "avro-confluent")
+                .option("avro-confluent.schema-registry.url", "http://schema-registry:8081")
+                .option("avro-confluent.schema-registry.subject", "source-topic-value")
+                .build());
+                
+        // 5. Define transformations using Table API
+        Table sourceTable = tableEnv.from("source_table");
+        Table resultTable = sourceTable
+            // Apply transformations
+            .select(...);
+            
+        // 6. Write results to Kafka with Schema Registry
+        TableDescriptor sinkDescriptor = TableDescriptor.forConnector("kafka")
+            .schema(resultSchema)
+            .option("topic", "result-topic")
+            .option("properties.bootstrap.servers", "kafka:9092")
+            .option("format", "avro-confluent")
+            .option("avro-confluent.schema-registry.url", "http://schema-registry:8081")
+            .option("avro-confluent.schema-registry.subject", "result-topic-value")
+            .build();
+            
+        tableEnv.createTemporaryTable("sink_table", sinkDescriptor);
+        resultTable.executeInsert("sink_table");
+        
+        // 7. Execute the job
+        env.execute("Flink Table API with Schema Registry Job");
+    }
+}
+----
