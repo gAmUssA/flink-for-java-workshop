@@ -70,7 +70,7 @@ subprojects {
 }
 
 // Configuration for the main application modules
-configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink-sql" }) {
+configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink-table-api" }) {
     apply(plugin = "application")
     apply(plugin = "com.gradleup.shadow")
 
@@ -95,8 +95,8 @@ configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink
     }
 }
 
-// Configuration specific to the flink-sql module
-project(":flink-sql") {
+// Configuration specific to the flink-table-api module
+project(":flink-table-api") {
     dependencies {
         // Flink Table API & SQL
         implementation("org.apache.flink:flink-table-api-java-bridge:$flinkVersion")
@@ -106,19 +106,19 @@ project(":flink-sql") {
 
     tasks.jar {
         manifest {
-            attributes["Main-Class"] = "io.confluent.developer.sql.FlinkSqlMain"
+            attributes["Main-Class"] = "io.confluent.developer.tableapi.FlinkTableApiMain"
         }
     }
 
     tasks.named<ShadowJar>("shadowJar") {
-        archiveBaseName.set("flink-sql")
+        archiveBaseName.set("flink-table-api")
         archiveClassifier.set("")
         archiveVersion.set("")
         mergeServiceFiles()
     }
 
     application {
-        mainClass.set("io.confluent.developer.sql.FlinkSqlMain")
+        mainClass.set("io.confluent.developer.tableapi.FlinkTableApiMain")
     }
 }
 

@@ -37,7 +37,7 @@ help:
 	@echo "${BLUE}${INFO} 🏗️ build${RESET}              - Build the entire project with Gradle"
 	@echo "${BLUE}${INFO} 🏗️ build-data-generator${RESET} - Build the Flink Data Generator"
 	@echo "${BLUE}${INFO} 🚀 run-streaming${RESET}      - Run the Flink Streaming application"
-	@echo "${BLUE}${INFO} 🚀 run-sql${RESET}            - Run the Flink SQL application"
+	@echo "${BLUE}${INFO} 🚀 run-sql${RESET}            - Run the Flink Table API application"
 	@echo "${BLUE}${INFO} 🧪 ci-checks${RESET}          - Run CI checks locally"
 	@echo ""
 	@echo "${YELLOW}${STAR} Data Generator:${RESET}"
@@ -45,7 +45,7 @@ help:
 	@echo "${BLUE}${INFO} ☁️ run-data-generator-cloud${RESET} - Run the Flink Data Generator in cloud environment"
 	@echo "${BLUE}${INFO} 🚀 run-data-generator-with-props${RESET} - Run with custom properties (PROPS=path/to/properties)"
 	@echo ""
-	@echo "${YELLOW}${STAR} Flink SQL with Table API:${RESET}"
+	@echo "${YELLOW}${STAR} Flink Table API:${RESET}"
 	@echo "${BLUE}${INFO} 🚀 run-sql-status-local${RESET}  - Run Flight Status Dashboard locally"
 	@echo "${BLUE}${INFO} 🚀 run-sql-routes-local${RESET}  - Run Flight Route Analytics locally"
 	@echo "${BLUE}${INFO} 🚀 run-sql-delays-local${RESET}  - Run Airline Delay Analytics locally"
@@ -336,59 +336,59 @@ run-streaming:
 	@echo "${BLUE}${ROCKET} Running Flink Streaming application...${RESET}"
 	./gradlew :flink-streaming:run
 
-# Run Flink SQL application
+# Run Flink Table API application
 .PHONY: run-sql
 run-sql:
-	@echo "${BLUE}${ROCKET} Running Flink SQL application...${RESET}"
-	./gradlew :flink-sql:run
+	@echo "${BLUE}${ROCKET} Running Flink Table API application...${RESET}"
+	./gradlew :flink-table-api:run
 
-# Flink SQL Module with Table API
+# Flink Table API Module
 .PHONY: run-sql-status-local
 run-sql-status-local:
 	@echo "${BLUE}${ROCKET} Running Flight Status Dashboard with Table API (local)...${RESET}"
-	./gradlew :flink-sql:run --args="status local"
+	./gradlew :flink-table-api:run --args="status local"
 	@echo "${GREEN}${CHECK} Flight Status Dashboard completed!${RESET}"
 
 .PHONY: run-sql-routes-local
 run-sql-routes-local:
 	@echo "${BLUE}${ROCKET} Running Flight Route Analytics with Table API (local)...${RESET}"
-	./gradlew :flink-sql:run --args="routes local"
+	./gradlew :flink-table-api:run --args="routes local"
 	@echo "${GREEN}${CHECK} Flight Route Analytics completed!${RESET}"
 
 .PHONY: run-sql-delays-local
 run-sql-delays-local:
 	@echo "${BLUE}${ROCKET} Running Airline Delay Analytics with Table API (local)...${RESET}"
-	./gradlew :flink-sql:run --args="delays local"
+	./gradlew :flink-table-api:run --args="delays local"
 	@echo "${GREEN}${CHECK} Airline Delay Analytics completed!${RESET}"
 
 .PHONY: run-sql-all-local
 run-sql-all-local:
 	@echo "${BLUE}${ROCKET} Running all SQL use cases with Table API (local)...${RESET}"
-	./gradlew :flink-sql:run --args="all local"
+	./gradlew :flink-table-api:run --args="all local"
 	@echo "${GREEN}${CHECK} All SQL use cases completed!${RESET}"
 
 .PHONY: run-sql-status-cloud
 run-sql-status-cloud:
 	@echo "${BLUE}${CLOUD} Running Flight Status Dashboard with Table API (cloud)...${RESET}"
-	./gradlew :flink-sql:run --args="status cloud"
+	./gradlew :flink-table-api:run --args="status cloud"
 	@echo "${GREEN}${CHECK} Flight Status Dashboard completed!${RESET}"
 
 .PHONY: run-sql-routes-cloud
 run-sql-routes-cloud:
 	@echo "${BLUE}${CLOUD} Running Flight Route Analytics with Table API (cloud)...${RESET}"
-	./gradlew :flink-sql:run --args="routes cloud"
+	./gradlew :flink-table-api:run --args="routes cloud"
 	@echo "${GREEN}${CHECK} Flight Route Analytics completed!${RESET}"
 
 .PHONY: run-sql-delays-cloud
 run-sql-delays-cloud:
 	@echo "${BLUE}${CLOUD} Running Airline Delay Analytics with Table API (cloud)...${RESET}"
-	./gradlew :flink-sql:run --args="delays cloud"
+	./gradlew :flink-table-api:run --args="delays cloud"
 	@echo "${GREEN}${CHECK} Airline Delay Analytics completed!${RESET}"
 
 .PHONY: run-sql-all-cloud
 run-sql-all-cloud:
 	@echo "${BLUE}${CLOUD} Running all SQL use cases with Table API (cloud)...${RESET}"
-	./gradlew :flink-sql:run --args="all cloud"
+	./gradlew :flink-table-api:run --args="all cloud"
 	@echo "${GREEN}${CHECK} All SQL use cases completed!${RESET}"
 
 # Docker Compose targets
