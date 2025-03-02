@@ -17,7 +17,7 @@ dependencies {
     // Avro dependencies
     implementation("org.apache.flink:flink-avro:$flinkVersion")
     implementation("org.apache.flink:flink-avro-confluent-registry:$flinkVersion")
-    implementation("org.apache.avro:avro:1.11.3")
+    implementation("org.apache.avro:avro:1.12.0")
     
     // Dependencies for the Schema Registry
     implementation("io.confluent:kafka-schema-registry-client:7.9.0")
