@@ -1,0 +1,97 @@
+= Flink SQL Module 🚀
+:toc:
+:icons: font
+:sectnums:
+
+This module provides a SQL-only approach to analyze flight data using Apache Flink SQL.
+
+== Overview ℹ️
+
+The Flink SQL module allows you to:
+
+* Run SQL queries against streaming flight data
+* Perform real-time analytics on flight delays and routes
+* Define and manage Kafka topics through SQL DDL statements
+* Create dashboards from continuous queries
+
+== Getting Started 🚀
+
+=== Prerequisites
+
+* Docker and Docker Compose installed
+* Kafka and Schema Registry running
+
+=== Running the SQL Client
+
+1. Start all services including Flink components:
++
+[source,bash]
+----
+make docker-up
+----
+
+2. Start the interactive SQL client:
++
+[source,bash]
+----
+make flink-sql-client
+----
+
+3. Execute a specific SQL use case:
++
+[source,bash]
+----
+make flink-sql-execute SQL_FILE=usecases/airline_delays.sql
+----
+
+== Use Cases 📊
+
+=== Airline Delay Analytics
+
+This use case analyzes flight delays by airline and calculates metrics like:
+
+* Average delay time
+* Number of delayed flights
+* Delay percentage
+
+Run with:
+[source,bash]
+----
+make flink-sql-execute SQL_FILE=usecases/airline_delays.sql
+----
+
+=== Flight Status Dashboard
+
+Creates a real-time dashboard with enriched flight information including:
+
+* Flight details (airline, flight number)
+* Origin and destination with city names
+* Current status and delay information
+
+Run with:
+[source,bash]
+----
+make flink-sql-execute SQL_FILE=usecases/flight_status.sql
+----
+
+=== Flight Route Analytics
+
+Analyzes flight routes and calculates statistics like:
+
+* Number of flights per route
+* Average delay by route
+
+Run with:
+[source,bash]
+----
+make flink-sql-execute SQL_FILE=usecases/flight_routes.sql
+----
+
+== Sample Queries 🔍
+
+The `queries` directory contains sample queries you can run against the created tables:
+
+* `delay_analytics.sql` - Queries for analyzing airline delays
+* `status_dashboard.sql` - Queries for flight status monitoring
+
+Run these after setting up the corresponding use case.

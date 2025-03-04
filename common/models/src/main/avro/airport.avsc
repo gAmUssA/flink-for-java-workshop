@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "Airport",
+  "namespace": "io.confluent.developer.models.reference",
+  "doc": "Schema for airport reference data",
+  "fields": [
+    {
+      "name": "airportCode",
+      "type": "string",
+      "doc": "IATA airport code"
+    },
+    {
+      "name": "airportName",
+      "type": "string",
+      "doc": "Full name of the airport"
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "doc": "City where the airport is located"
+    },
+    {
+      "name": "country",
+      "type": "string",
+      "doc": "Country where the airport is located"
+    },
+    {
+      "name": "latitude",
+      "type": "double",
+      "doc": "Latitude coordinate of the airport"
+    },
+    {
+      "name": "longitude",
+      "type": "double",
+      "doc": "Longitude coordinate of the airport"
+    }
+  ]
+}

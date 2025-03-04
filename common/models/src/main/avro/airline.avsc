@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "Airline",
+  "namespace": "io.confluent.developer.models.reference",
+  "doc": "Schema for airline reference data",
+  "fields": [
+    {
+      "name": "airlineCode",
+      "type": "string",
+      "doc": "Unique identifier for the airline"
+    },
+    {
+      "name": "airlineName",
+      "type": "string",
+      "doc": "Full name of the airline"
+    },
+    {
+      "name": "country",
+      "type": "string",
+      "doc": "Country where the airline is based"
+    }
+  ]
+}

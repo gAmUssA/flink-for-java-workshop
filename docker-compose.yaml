@@ -1,6 +1,6 @@
 services:
   kafka:
-    image: apache/kafka:3.9.0
+    image: apache/kafka:3.8.0
     hostname: kafka
     ports:
       - "9092:9092"
@@ -46,3 +46,70 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
+
+  # Flink components
+  jobmanager:
+    build:
+      context: ./flink-sql/docker/sql-client
+    hostname: jobmanager
+    ports:
+      - "8082:8081"  # Already set correctly - external 8082, internal 8081
+    command: jobmanager
+    environment:
+      - FLINK_JOBMANAGER_HOST=jobmanager
+      - FLINK_JOBMANAGER_PORT=8081
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        rest.flamegraph.enabled: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  taskmanager:
+    build:
+      context: ./flink-sql/docker/sql-client
+    hostname: taskmanager
+    depends_on:
+      jobmanager:
+        condition: service_healthy
+    command: taskmanager
+    deploy:
+      replicas: 1
+    environment:
+      - FLINK_JOBMANAGER_HOST=jobmanager
+      - FLINK_JOBMANAGER_PORT=8081
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 16
+
+#  sql-client:
+#    build:
+#      context: ./flink-sql/docker/sql-client
+#    command:
+#      - bin/sql-client.sh
+#    depends_on:
+#      jobmanager:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#      schema-registry:
+#        condition: service_healthy
+#    volumes:
+#      - ./flink-sql/sql:/opt/sql
+#    environment:
+#      - FLINK_JOBMANAGER_HOST=jobmanager
+#      - FLINK_JOBMANAGER_PORT=8081
+#      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#      - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+#      - |
+#        - FLINK_PROPERTIES=
+#          jobmanager.rpc.address: jobmanager
+#          rest.address: jobmanager

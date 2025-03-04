@@ -1,0 +1,133 @@
+= Reference Data Generator 🏢
+:toc:
+:icons: font
+:sectnums:
+
+This module generates reference data for airlines and airports and sends it to Kafka topics. 
+The data is used by the Flink SQL module for enriching flight data.
+
+== Features
+
+* Generates realistic airline data with airline codes, names, and countries
+* Generates realistic airport data with airport codes, names, cities, countries, and locations
+* Sends data to Kafka topics in JSON format
+* Configurable via properties files or command-line arguments
+* Supports both local Kafka and Confluent Cloud
+
+== Configuration
+
+The generator can be configured using properties files or command-line arguments.
+
+=== Properties Files
+
+Two property files are included:
+
+* `local.properties` - Configuration for local Kafka
+* `cloud-template.properties` - Template for Confluent Cloud configuration
+
+You can also create your own properties file and specify it with the `--properties` option.
+
+#### Local Properties
+
+```properties
+# Kafka Configuration for local environment
+bootstrap.servers=localhost:29092
+
+# Topic Configuration
+topic.airlines=airlines
+topic.airports=airports
+
+# Generator Configuration
+generator.airlines.count=20
+generator.airports.count=50
+
+# Environment
+environment=local
+```
+
+#### Cloud Properties
+
+```properties
+# Kafka Configuration for Confluent Cloud
+bootstrap.servers=${BOOTSTRAP_SERVERS}
+
+# Topic Configuration
+topic.airlines=airlines
+topic.airports=airports
+
+# Generator Configuration
+generator.airlines.count=20
+generator.airports.count=50
+
+# Security settings
+security.protocol=SASL_SSL
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="${CONFLUENT_API_KEY}" password="${CONFLUENT_API_SECRET}";
+
+# Environment
+environment=cloud
+```
+
+=== Command-Line Options
+
+The generator supports the following command-line options:
+
+* `-e, --env <environment>` - Environment (local or cloud), default: local
+* `-p, --properties <path>` - Path to properties file
+* `--cloud-key <key>` - Confluent Cloud API Key (overrides properties)
+* `--cloud-secret <secret>` - Confluent Cloud API Secret (overrides properties)
+* `-b, --bootstrap-servers <servers>` - Kafka bootstrap servers (overrides properties)
+* `-h, --help` - Show help message
+
+== Running the Generator
+
+=== Using Makefile
+
+The easiest way to run the generator is using the Makefile targets:
+
+```bash
+# Run with local Kafka
+make run-ref-data-generator
+
+# Run with Confluent Cloud
+make run-ref-data-generator-cloud CLOUD_KEY=<key> CLOUD_SECRET=<secret> BOOTSTRAP_SERVERS=<servers>
+
+# Run with custom properties file
+make run-ref-data-generator-with-props PROPS=path/to/properties
+```
+
+=== Using Gradle
+
+You can also run the generator directly with Gradle:
+
+```bash
+# Run with local Kafka
+./gradlew :data-generator:run --args="--env local"
+
+# Run with Confluent Cloud
+./gradlew :data-generator:run --args="--env cloud --cloud-key <key> --cloud-secret <secret> --bootstrap-servers <servers>"
+
+# Run with custom properties file
+./gradlew :data-generator:run --args="--properties path/to/properties"
+```
+
+== Data Models
+
+=== Airline
+
+The airline model includes:
+
+* `airlineCode` - IATA airline code (e.g., "AA")
+* `airlineName` - Airline name (e.g., "American Airlines")
+* `country` - Country of the airline (e.g., "United States")
+
+=== Airport
+
+The airport model includes:
+
+* `airportCode` - IATA airport code (e.g., "JFK")
+* `airportName` - Airport name (e.g., "John F. Kennedy International Airport")
+* `city` - City (e.g., "New York")
+* `country` - Country (e.g., "United States")
+* `latitude` - Latitude coordinate
+* `longitude` - Longitude coordinate

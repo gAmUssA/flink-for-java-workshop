@@ -40,10 +40,15 @@ help:
 	@echo "${BLUE}${INFO} 🚀 run-sql${RESET}            - Run the Flink Table API application"
 	@echo "${BLUE}${INFO} 🧪 ci-checks${RESET}          - Run CI checks locally"
 	@echo ""
-	@echo "${YELLOW}${STAR} Data Generator:${RESET}"
+	@echo "${YELLOW}${STAR} Data Generators:${RESET}"
+	@echo "${BLUE}${INFO} 🏗️ build-data-generator${RESET} - Build the Flink Data Generator module"
+	@echo "${BLUE}${INFO} 🏗️ build-ref-generator${RESET}  - Build the Reference Data Generator module"
 	@echo "${BLUE}${INFO} 🚀 run-data-generator-local${RESET} - Run the Flink Data Generator in local environment"
 	@echo "${BLUE}${INFO} ☁️ run-data-generator-cloud${RESET} - Run the Flink Data Generator in cloud environment"
 	@echo "${BLUE}${INFO} 🚀 run-data-generator-with-props${RESET} - Run with custom properties (PROPS=path/to/properties)"
+	@echo "${BLUE}${INFO} 🚀 run-ref-generator-local${RESET} - Run the Reference Data Generator in local environment"
+	@echo "${BLUE}${INFO} ☁️ run-ref-generator-cloud${RESET} - Run the Reference Data Generator in cloud environment"
+	@echo "${BLUE}${INFO} 🚀 run-ref-generator-with-props${RESET} - Run the Reference Data Generator with custom properties (PROPS=path/to/properties)"
 	@echo ""
 	@echo "${YELLOW}${STAR} Flink Table API:${RESET}"
 	@echo "${BLUE}${INFO} 🚀 run-sql-status-local${RESET}  - Run Flight Status Dashboard locally"
@@ -54,6 +59,11 @@ help:
 	@echo "${BLUE}${INFO} ☁️ run-sql-routes-cloud${RESET}  - Run Flight Route Analytics on cloud"
 	@echo "${BLUE}${INFO} ☁️ run-sql-delays-cloud${RESET}  - Run Airline Delay Analytics on cloud"
 	@echo "${BLUE}${INFO} ☁️ run-sql-all-cloud${RESET}     - Run all SQL use cases on cloud"
+	@echo ""
+	@echo "${YELLOW}${STAR} Flink SQL:${RESET}"
+	@echo "${BLUE}${INFO} 🚀 flink-sql-client${RESET}      - Start interactive Flink SQL client"
+	@echo "${BLUE}${INFO} 🚀 flink-sql-execute${RESET}     - Execute a specific SQL file (SQL_FILE=path/to/file.sql)"
+	@echo "${BLUE}${INFO} 🚀 flink-sql-build${RESET}       - Build Flink SQL client image"
 	@echo ""
 	@echo "${YELLOW}${STAR} Docker Management:${RESET}"
 	@echo "${BLUE}${INFO} 🐳 docker-up${RESET}          - Start all containers"
@@ -297,7 +307,7 @@ terraform-org-id:
 		exit 1; \
 	fi
 	@echo "${BLUE}${INFO} Exporting organization ID to TF_VAR_org_id...${RESET}"
-	@export TF_VAR_org_id=$$(confluent organization list -o json | jq -c -r '.[] | select(.is_current)' | jq '.id'); \
+	@export TF_VAR_org_id=$$(confluent organization list -o json | jq -c -r '.[] | select(.is_current)' | jq -r '.id'); \
 	echo "TF_VAR_org_id=$$TF_VAR_org_id"; \
 	echo "export TF_VAR_org_id=$$TF_VAR_org_id" >> .env; \
 	echo "${GREEN}${CHECK} Organization ID exported to TF_VAR_org_id and saved to .env file!${RESET}"
@@ -460,7 +470,8 @@ docker-logs:
 
 docker-restart:
 	@echo "${BLUE}${ROCKET} Restarting Docker containers...${RESET}"
-	docker compose restart
+	docker compose down
+	docker compose up -d
 	@echo "${GREEN}${CHECK} Docker containers restarted successfully!${RESET}"
 
 # Run CI checks locally
@@ -492,26 +503,45 @@ docker-build:
 	@echo "${GREEN}${CHECK} Docker image built successfully!${RESET}"
 	@echo "${YELLOW}${INFO} Run with: docker run -it flink-for-java-workshop:local${RESET}"
 
+# Flink SQL related targets
+.PHONY: flink-sql-client flink-sql-execute flink-sql-build
+
+flink-sql-build:
+	@echo "${BLUE}${ROCKET} Building Flink SQL client image...${RESET}"
+	docker compose build jobmanager
+	docker compose build taskmanager
+
+flink-sql-client:
+	@echo "${BLUE}${ROCKET} Starting interactive Flink SQL client...${RESET}"
+	docker compose run --rm sql-client
+
+flink-sql-execute:
+	@echo "${BLUE}${ROCKET} Executing SQL file...${RESET}"
+	@if [ -z "$(SQL_FILE)" ]; then \
+		echo "${RED}${ERROR} SQL_FILE parameter is required${RESET}"; \
+		echo "Example: make flink-sql-execute SQL_FILE=usecases/airline_delays.sql"; \
+		exit 1; \
+	fi
+	docker compose run --rm -e SQL_FILE=$(SQL_FILE) sql-client
+
 # Flink Data Generator targets
-.PHONY: build-data-generator
+.PHONY: build-data-generator run-data-generator-local run-data-generator-cloud run-data-generator-with-props
+
 build-data-generator:
 	@echo "${BLUE}${ROCKET} Building Flink Data Generator...${RESET}"
 	./gradlew :flink-data-generator:build
 	@echo "${GREEN}${CHECK} Flink Data Generator built successfully!${RESET}"
 
-.PHONY: run-data-generator-local
 run-data-generator-local:
 	@echo "${BLUE}${ROCKET} Running Flink Data Generator in local environment...${RESET}"
 	./gradlew :flink-data-generator:run --args="--env local"
 	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
 
-.PHONY: run-data-generator-cloud
 run-data-generator-cloud:
 	@echo "${BLUE}${CLOUD} Running Flink Data Generator in cloud environment...${RESET}"
 	./gradlew :flink-data-generator:run --args="--env cloud"
 	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
 
-.PHONY: run-data-generator-with-props
 run-data-generator-with-props:
 	@echo "${BLUE}${ROCKET} Running Flink Data Generator with custom properties...${RESET}"
 	@if [ -z "$(PROPS)" ]; then \
@@ -520,6 +550,33 @@ run-data-generator-with-props:
 	fi
 	./gradlew :flink-data-generator:run --args="--properties $(PROPS)"
 	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
+
+# Reference Data Generator targets
+.PHONY: build-ref-generator run-ref-generator-local run-ref-generator-cloud run-ref-generator-with-props
+
+build-ref-generator:
+	@echo "${BLUE}${ROCKET} Building Reference Data Generator...${RESET}"
+	./gradlew :data-generator:build
+	@echo "${GREEN}${CHECK} Reference Data Generator built successfully!${RESET}"
+
+run-ref-generator-local:
+	@echo "${BLUE}${ROCKET} Running Reference Data Generator in local environment...${RESET}"
+	./gradlew :data-generator:run --args="--env local"
+	@echo "${GREEN}${CHECK} Reference Data Generator completed!${RESET}"
+
+run-ref-generator-cloud:
+	@echo "${BLUE}${CLOUD} Running Reference Data Generator in cloud environment...${RESET}"
+	./gradlew :data-generator:run --args="--env cloud"
+	@echo "${GREEN}${CHECK} Reference Data Generator completed!${RESET}"
+
+run-ref-generator-with-props:
+	@echo "${BLUE}${ROCKET} Running Reference Data Generator with custom properties...${RESET}"
+	@if [ -z "$(PROPS)" ]; then \
+		echo "${RED}${ERROR} Please specify properties file with PROPS=path/to/properties.${RESET}"; \
+		exit 1; \
+	fi
+	./gradlew :data-generator:run --args="--properties $(PROPS)"
+	@echo "${GREEN}${CHECK} Reference Data Generator completed!${RESET}"
 
 # Clean up
 .PHONY: clean
