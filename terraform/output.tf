@@ -1,51 +1,47 @@
-# output "schema_registry_url" {
-#   value = data.confluent_schema_registry_cluster.advanced.rest_endpoint
-# }
+output "acks" {
+  value = "all"
+}
 
-output "kafka_bootstrap_servers" {
+output "bootstrap_servers" {
   value = replace(confluent_kafka_cluster.kafka_cluster.bootstrap_endpoint, "SASL_SSL://", "")
 }
 
-output "cloud" {
-  value = var.cloud_provider
+output "client_dns_lookup" {
+  value = "use_all_dns_ips"
 }
 
-output "region" {
-  value = var.cloud_region
+output "environment" {
+  value = "cloud"
 }
 
-output "organization-id" {
-  value = replace(var.org_id, "\"", "")
+output "security_protocol" {
+  value = "SASL_SSL"
 }
 
-output "environment-id" {
-  value = confluent_environment.cc_env.id
+output "sasl_mechanism" {
+  value = "PLAIN"
 }
 
-output "compute-pool-id" {
-  value = confluent_flink_compute_pool.main_flink_pool.id
+output "sasl_jaas_config" {
+  value = "org.apache.kafka.common.security.plain.PlainLoginModule required username='${confluent_api_key.app-manager-kafka-api-key.id}' password='${nonsensitive(confluent_api_key.app-manager-kafka-api-key.secret)}';"
 }
 
-output "kafka_sasl_jaas_config" {
-  value = "org.apache.kafka.common.security.plain.PlainLoginModule required username='${confluent_api_key.kafka_developer_kafka_api_key.id}' password='${nonsensitive(confluent_api_key.kafka_developer_kafka_api_key.secret)}';"
-}
-
-output "registry_url" {
+output "schema_registry_url" {
   value = data.confluent_schema_registry_cluster.advanced.rest_endpoint
 }
 
-output "registry_key" {
-  value = confluent_api_key.sr_manager_kafka_api_key.id
+output "schema_registry_basic_auth_credentials_source" {
+  value = "USER_INFO"
 }
 
-output "registry_secret" {
-  value = nonsensitive(confluent_api_key.sr_manager_kafka_api_key.secret)
+output "schema_registry_basic_auth_user_info" {
+  value = "${confluent_api_key.env-manager-schema-registry-api-key.id}:${nonsensitive(confluent_api_key.env-manager-schema-registry-api-key.secret)}"
 }
 
-output "flink-api-key" {
-  value = confluent_api_key.flink_developer_api_key.id
+output "session_timeout_ms" {
+  value = 45000
 }
 
-output "flink-api-secret" {
-  value = nonsensitive(confluent_api_key.flink_developer_api_key.secret)
+output "topic_name" {
+  value = confluent_kafka_topic.flights_avro.topic_name
 }

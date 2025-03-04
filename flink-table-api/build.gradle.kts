@@ -31,7 +31,7 @@ dependencies {
     
     // Test dependencies
     testImplementation("org.apache.flink:flink-test-utils:$flinkVersion")
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation(platform("org.junit:junit-bom:5.12.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }

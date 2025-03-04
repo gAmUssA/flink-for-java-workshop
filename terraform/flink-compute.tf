@@ -1,79 +1,88 @@
-resource "confluent_flink_compute_pool" "main_flink_pool" {
-  display_name = "main_flink_pool"
-  cloud        = var.cloud_provider
-  region       = var.cloud_region
-  max_cfu      = 5
+resource "confluent_flink_compute_pool" "compute_pool_1" {
+  display_name     = "-workshop_compute_pool_1"
+  cloud            = var.cloud_provider
+  region           = var.cloud_region
+  max_cfu          = 10
   environment {
     id = confluent_environment.cc_env.id
   }
+
+  lifecycle {
+    prevent_destroy = false
+  }
 }
 
-data "confluent_flink_region" "main_flink_region" {
+// Service account to perform a task within Confluent Cloud, such as executing a Flink statement
+resource "confluent_service_account" "statements-runner" {
+  display_name = "${var.cc_env_name}-statements-runner"
+  description  = "Service account for running Flink Statements in 'inventory' Kafka cluster"
+
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+resource "confluent_role_binding" "statements-runner-environment-admin" {
+  principal   = "User:${confluent_service_account.statements-runner.id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = confluent_environment.cc_env.resource_name
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+// https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#flinkadmin
+resource "confluent_role_binding" "app-manager-flink-developer" {
+  principal   = "User:${confluent_service_account.app-manager.id}"
+  role_name   = "FlinkAdmin"
+  crn_pattern = confluent_environment.cc_env.resource_name
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+data "confluent_organization" "main" {}
+
+// https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#assigner
+// https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html#submit-long-running-statements
+resource "confluent_role_binding" "app-manager-assigner" {
+  principal   = "User:${confluent_service_account.app-manager.id}"
+  role_name   = "Assigner"
+  crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=${confluent_service_account.statements-runner.id}"
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+data "confluent_flink_region" "us-east-2" {
   cloud  = var.cloud_provider
   region = var.cloud_region
 }
 
-resource "confluent_service_account" "flink_developer" {
-  display_name = "${var.cc_env_name}-flink_developer"
-  description  = "Service account for flink developer"
+data "confluent_flink_region" "main" {
+  cloud  = var.cloud_provider
+  region = var.cloud_region
 }
 
-resource "confluent_role_binding" "fd_flink_developer" {
-  principal   = "User:${confluent_service_account.flink_developer.id}"
-  role_name   = "FlinkDeveloper"
-  crn_pattern = confluent_environment.cc_env.resource_name
 
-  depends_on = [confluent_flink_compute_pool.main_flink_pool]
-}
-
-resource "confluent_role_binding" "fd_kafka_write" {
-  principal   = "User:${confluent_service_account.flink_developer.id}"
-  role_name   = "DeveloperWrite"
-  crn_pattern = "${confluent_kafka_cluster.kafka_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.kafka_cluster.id}/topic=*"
-
-  depends_on = [confluent_kafka_cluster.kafka_cluster]
-}
-
-resource "confluent_role_binding" "fd_kafka_read" {
-  principal   = "User:${confluent_service_account.flink_developer.id}"
-  role_name   = "DeveloperRead"
-  crn_pattern = "${confluent_kafka_cluster.kafka_cluster.rbac_crn}/kafka=${confluent_kafka_cluster.kafka_cluster.id}/topic=*"
-
-  depends_on = [confluent_kafka_cluster.kafka_cluster]
-}
-
-resource "confluent_role_binding" "fd_schema_registry_write" {
-  principal   = "User:${confluent_service_account.flink_developer.id}"
-  role_name   = "DeveloperWrite"
-  crn_pattern = "${data.confluent_schema_registry_cluster.advanced.resource_name}/subject=*"
-}
-
-resource "confluent_role_binding" "fd_schema_registry_read" {
-  principal   = "User:${confluent_service_account.flink_developer.id}"
-  role_name   = "DeveloperRead"
-  crn_pattern = "${data.confluent_schema_registry_cluster.advanced.resource_name}/subject=*"
-}
-
-resource "confluent_api_key" "flink_developer_api_key" {
-  display_name = "flink_developer_api_key"
-  description  = "Flink Developer API Key that is owned by 'flink_developer' service account"
+resource "confluent_api_key" "app-manager-flink-api-key" {
+  display_name = "app-manager-flink-api-key"
+  description  = "Flink API Key that is owned by 'app-manager' service account"
   owner {
-    id          = confluent_service_account.flink_developer.id
-    api_version = confluent_service_account.flink_developer.api_version
-    kind        = confluent_service_account.flink_developer.kind
+    id          = confluent_service_account.app-manager.id
+    api_version = confluent_service_account.app-manager.api_version
+    kind        = confluent_service_account.app-manager.kind
   }
-
   managed_resource {
-    id          = data.confluent_flink_region.main_flink_region.id
-    api_version = data.confluent_flink_region.main_flink_region.api_version
-    kind        = data.confluent_flink_region.main_flink_region.kind
-
+    id          = data.confluent_flink_region.us-east-2.id
+    api_version = confluent_flink_compute_pool.compute_pool_1.api_version
+    kind        = data.confluent_flink_region.us-east-2.kind
     environment {
       id = confluent_environment.cc_env.id
     }
   }
-
-  depends_on = [
-    confluent_service_account.flink_developer
-  ]
+  lifecycle {
+    prevent_destroy = false
+  }
 }
+

@@ -17,17 +17,20 @@ export CONFLUENT_CLOUD_API_KEY=<API KEY>
 export CONFLUENT_CLOUD_API_SECRET=<API SECRET>
 ```
 
-
 == Execute Terraform Manifests
 
 The terraform manifests require the Confluent Cloud organization ID in order to provision infrastructure. 
 This can be found in the Confluent Cloud console in the "Organization Settings" and exported to an environment variable:
 
+image::org-id.jpg[]
+
+image::org-id-2.jpg[]
+
 ```bash
 export TF_VAR_org_id=<ORG ID VALUE FROM CONSOLE>
 ```
 
-This value can also be queried by using the Confluent CLI to query your account, piping the resulting to a `jq` query:
+This value can also be queried by using the Confluent CLI to query your account, piping the result to a `jq` query and using that value in a `TF_VAR_`:
 
 ```bash
 export TF_VAR_org_id=$(confluent organization list -o json | jq -c -r '.[] | select(.is_current)' | jq '.id')
@@ -51,7 +54,7 @@ This `terraform output` command will create a file with those parameters:
 ```bash
 terraform output -json \
  | jq -r 'to_entries | map( {key: .key|tostring|split("_")|join("."), value: .value} ) | map("client.\(.key)=\(.value.value)") | .[]' \
- | while read -r line ; do echo "$line"; done > ../cloud.properties
+ | while read -r line ; do echo "$line"; done > ../common/utils/src/main/resources/cloud.properties
 ```
 
 == Teardown
