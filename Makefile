@@ -70,6 +70,8 @@ help:
 	@echo "${BLUE}${INFO} ☁️ terraform-apply${RESET}    - Apply Terraform changes"
 	@echo "${BLUE}${INFO} ☁️ terraform-destroy${RESET}  - Destroy Terraform-managed infrastructure"
 	@echo "${BLUE}${INFO} ☁️ terraform-output${RESET}   - Generate cloud.properties from Terraform output"
+	@echo "${BLUE}${INFO} ☁️ terraform-upgrade${RESET}  - Upgrade Terraform providers"
+	@echo "${BLUE}${INFO} ☁️ terraform-org-id${RESET}   - Get Confluent Cloud organization ID"
 	@echo "${BLUE}${INFO} ☁️ cc-setup${RESET}           - Complete Confluent Cloud setup (init, plan, apply, output)"
 	@echo "${BLUE}${INFO} ☁️ cc-teardown${RESET}        - Teardown Confluent Cloud infrastructure"
 	@echo "${BLUE}${INFO} ☁️ tf-init${RESET}            - Shorthand for terraform-init"
@@ -77,6 +79,8 @@ help:
 	@echo "${BLUE}${INFO} ☁️ tf-apply${RESET}           - Shorthand for terraform-apply"
 	@echo "${BLUE}${INFO} ☁️ tf-destroy${RESET}         - Shorthand for terraform-destroy"
 	@echo "${BLUE}${INFO} ☁️ tf-out${RESET}             - Shorthand for terraform-output"
+	@echo "${BLUE}${INFO} ☁️ tf-upgrade${RESET}         - Shorthand for terraform-upgrade"
+	@echo "${BLUE}${INFO} ☁️ tf-org-id${RESET}          - Shorthand for terraform-org-id"
 	@echo ""
 	@echo "${YELLOW}${STAR} Cleanup:${RESET}"
 	@echo "${BLUE}${INFO} 🧹 clean${RESET}              - Clean up temporary files"
@@ -253,7 +257,7 @@ terraform-init:
 	@echo "${BLUE}${ROCKET} Initializing Terraform...${RESET}"
 	cd terraform && terraform init
 
-.PHONY: terraform-update
+.PHONY: terraform-upgrade
 terraform-upgrade:
 	@echo "${BLUE}${ROCKET} Updating Terraform...${RESET}"
 	cd terraform && terraform init -upgrade
@@ -266,7 +270,7 @@ terraform-plan:
 .PHONY: terraform-apply
 terraform-apply:
 	@echo "${BLUE}${ROCKET} Applying Terraform changes...${RESET}"
-	cd terraform && terraform apply
+	cd terraform && terraform apply "tfplan"
 
 .PHONY: terraform-destroy
 terraform-destroy:
@@ -280,12 +284,31 @@ terraform-destroy:
 		echo "${YELLOW}${INFO} Operation cancelled.${RESET}"; \
 	fi
 
+# Get Confluent Cloud organization ID
+.PHONY: terraform-org-id
+terraform-org-id:
+	@echo "${BLUE}${CLOUD} Getting Confluent Cloud organization ID...${RESET}"
+	@if ! command -v confluent >/dev/null 2>&1; then \
+		echo "${RED}${ERROR} Confluent CLI is not installed. Please install it first.${RESET}"; \
+		exit 1; \
+	fi
+	@if ! command -v jq >/dev/null 2>&1; then \
+		echo "${RED}${ERROR} jq is not installed. Please install it first.${RESET}"; \
+		exit 1; \
+	fi
+	@echo "${BLUE}${INFO} Exporting organization ID to TF_VAR_org_id...${RESET}"
+	@export TF_VAR_org_id=$$(confluent organization list -o json | jq -c -r '.[] | select(.is_current)' | jq '.id'); \
+	echo "TF_VAR_org_id=$$TF_VAR_org_id"; \
+	echo "export TF_VAR_org_id=$$TF_VAR_org_id" >> .env; \
+	echo "${GREEN}${CHECK} Organization ID exported to TF_VAR_org_id and saved to .env file!${RESET}"
+
 # Generate cloud.properties from Terraform output
 .PHONY: terraform-output
 terraform-output:
 	@echo "${BLUE}${CLOUD} Generating cloud.properties from Terraform output...${RESET}"
-	cd terraform && terraform output -json | jq -r 'to_entries | map( {key: .key|tostring|split("_")|join("."), value: .value} ) | map("client.\(.key)=\(.value.value)") | .[]' > ../cloud.properties
-	@echo "${GREEN}${CHECK} cloud.properties generated!${RESET}"
+	@mkdir -p ../common/utils/src/main/resources
+	cd terraform && terraform output -json | jq -r 'to_entries | map( {key: .key|tostring|split("_")|join("."), value: .value} ) | map("\(.key)=\(.value.value)") | .[]' | while read -r line ; do echo "$$line"; done > ../common/utils/src/main/resources/cloud.properties
+	@echo "${GREEN}${CHECK} cloud.properties generated in ../common/utils/src/main/resources/cloud.properties!${RESET}"
 
 # Shorthand commands for Terraform operations
 .PHONY: tf-init
@@ -303,8 +326,11 @@ tf-destroy: terraform-destroy
 .PHONY: tf-out
 tf-out: terraform-output
 
-.PHONY: tf-update
-tf-out: terraform-upgrade
+.PHONY: tf-upgrade
+tf-upgrade: terraform-upgrade
+
+.PHONY: tf-org-id
+tf-org-id: terraform-org-id
 
 # Complete Confluent Cloud setup
 .PHONY: cc-setup
@@ -316,6 +342,8 @@ cc-setup:
 	fi
 	@echo "${BLUE}${INFO} Loading environment variables...${RESET}"
 	@source .env || true
+	@echo "${BLUE}${INFO} Getting Confluent Cloud organization ID...${RESET}"
+	@$(MAKE) terraform-org-id
 	@echo "${BLUE}${INFO} Initializing Terraform...${RESET}"
 	@$(MAKE) terraform-init
 	@echo "${BLUE}${INFO} Planning Terraform changes...${RESET}"
