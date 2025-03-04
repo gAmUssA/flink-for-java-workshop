@@ -19,7 +19,7 @@ resource "confluent_environment" "cc_env" {
   display_name = var.cc_env_name
 
   stream_governance {
-    package = "ADVANCED"
+    package = "ESSENTIALS"
   }
 
   lifecycle {

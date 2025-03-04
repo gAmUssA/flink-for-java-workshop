@@ -62,7 +62,7 @@ Whether you're building analytics dashboards, event-driven systems, or handling 
 - *Why?* Recommended for Flink development.
 - *Download IntelliJ IDEA (Recommended):* https://www.jetbrains.com/idea/download/[IntelliJ IDEA]
 - *Download VS Code (Alternative):* https://code.visualstudio.com/download[VS Code]
-    - *Confluent Extension for VSCode:* https://marketplace.visualstudio.com/items?itemName=confluentinc.confluent-vscode[link] 
+    - *Confluent Extension for VSCode:* https://marketplace.visualstudio.com/items?itemName=confluentinc.vscode-confluent[https://marketplace.visualstudio.com/items?itemName=confluentinc.confluent-vscode][link] 
 
 === 6️⃣ Gradle Installed via Wrapper (No Need for Local Installation)
 
