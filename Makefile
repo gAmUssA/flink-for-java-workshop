@@ -253,6 +253,11 @@ terraform-init:
 	@echo "${BLUE}${ROCKET} Initializing Terraform...${RESET}"
 	cd terraform && terraform init
 
+.PHONY: terraform-update
+terraform-upgrade:
+	@echo "${BLUE}${ROCKET} Updating Terraform...${RESET}"
+	cd terraform && terraform init -upgrade
+
 .PHONY: terraform-plan
 terraform-plan:
 	@echo "${BLUE}${CLOCK} Planning Terraform changes...${RESET}"
@@ -297,6 +302,9 @@ tf-destroy: terraform-destroy
 
 .PHONY: tf-out
 tf-out: terraform-output
+
+.PHONY: tf-update
+tf-out: terraform-upgrade
 
 # Complete Confluent Cloud setup
 .PHONY: cc-setup
