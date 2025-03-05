@@ -22,8 +22,32 @@ import static org.apache.flink.table.api.Expressions.*;
  */
 public class FlightStatusDashboard {
     private static final Logger LOG = LoggerFactory.getLogger(FlightStatusDashboard.class);
-    private static final String TABLE_NAME = "flight_source";
-    private static final String TOPIC_NAME = "flights";
+    
+    private final StreamExecutionEnvironment streamEnv;
+    private final StreamTableEnvironment tableEnv;
+    private final Properties kafkaProperties;
+    private final String topic;
+    private final String tableName;
+    
+    /**
+     * Constructor for the FlightStatusDashboard.
+     *
+     * @param streamEnv The Flink streaming environment
+     * @param tableEnv The Flink table environment
+     * @param kafkaProperties Kafka properties
+     * @param topic The Kafka topic to read from
+     */
+    public FlightStatusDashboard(
+            StreamExecutionEnvironment streamEnv,
+            StreamTableEnvironment tableEnv,
+            Properties kafkaProperties,
+            String topic) {
+        this.streamEnv = streamEnv;
+        this.tableEnv = tableEnv;
+        this.kafkaProperties = kafkaProperties;
+        this.topic = topic;
+        this.tableName = ConfigLoader.getTableName(kafkaProperties, "flights", "Flights");
+    }
 
     public static void main(String[] args) throws Exception {
         // Parse command line arguments
@@ -34,17 +58,37 @@ public class FlightStatusDashboard {
         
         // Load Kafka properties
         Properties properties = ConfigLoader.loadKafkaProperties(env);
+        String topic = ConfigLoader.getTopicName(properties, "flights", "flights");
         
         // Set up the streaming execution environment
         StreamExecutionEnvironment streamEnv = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(streamEnv);
         
+        // Create the dashboard instance
+        FlightStatusDashboard dashboard = new FlightStatusDashboard(streamEnv, tableEnv, properties, topic);
+        
+        // Process the flight status
+        dashboard.processFlightStatus();
+        
+        // Execute the job
+        streamEnv.execute("Flight Status Dashboard");
+    }
+    
+    /**
+     * Process the flight status data.
+     * Creates a table from the Kafka topic and executes a query to count flights by status.
+     *
+     * @return The result table containing flight status counts
+     */
+    public Table processFlightStatus() {
+        LOG.info("Creating flight table: {}", tableName);
+        
         // Create the flight table using the Table API
         Table flightTable = FlightTableApiFactory.createFlightTable(
                 tableEnv,
-                TABLE_NAME,
-                TOPIC_NAME,
-                properties
+                tableName,
+                topic,
+                kafkaProperties
         );
         
         // Execute the flight status dashboard query using Table API
@@ -52,17 +96,21 @@ public class FlightStatusDashboard {
         
         // Group by status and count flights
         Table resultTable = flightTable
-                .groupBy($("status"))
+                .filter($("status").isNotNull())
                 .select(
+                        $("flight_number"),
+                        $("origin"),
+                        $("destination"),
                         $("status"),
-                        $("status").count().as("flight_count")
+                        $("departure_time"),
+                        $("arrival_time")
                 );
         
         // Print the results
         LOG.info("Query result schema: {}", resultTable.getResolvedSchema());
-        resultTable.execute().print();
+        TableResult result = resultTable.execute();
+        result.print();
         
-        // Execute the job
-        streamEnv.execute("Flight Status Dashboard");
+        return resultTable;
     }
 }

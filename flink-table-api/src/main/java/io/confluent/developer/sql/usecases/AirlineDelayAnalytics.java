@@ -1,5 +1,6 @@
 package io.confluent.developer.sql.usecases;
 
+import io.confluent.developer.sql.config.ConfigLoader;
 import io.confluent.developer.sql.table.FlightTableApiFactory;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
@@ -19,12 +20,14 @@ import static org.apache.flink.table.api.Expressions.*;
  */
 public class AirlineDelayAnalytics {
     private static final Logger LOG = LoggerFactory.getLogger(AirlineDelayAnalytics.class);
-    private static final String TABLE_NAME = "flight_source";
     
     private final StreamExecutionEnvironment streamEnv;
     private final StreamTableEnvironment tableEnv;
     private final Properties kafkaProperties;
     private final String topic;
+    private final String tableName;
+    private final String delayPerformanceTableName;
+    private final String hourlyDelaysTableName;
     
     /**
      * Creates a new AirlineDelayAnalytics instance.
@@ -43,6 +46,12 @@ public class AirlineDelayAnalytics {
         this.tableEnv = tableEnv;
         this.kafkaProperties = kafkaProperties;
         this.topic = topic;
+        this.tableName = ConfigLoader.getTableName(kafkaProperties, "flights", "Flights");
+        this.delayPerformanceTableName = ConfigLoader.getTableName(kafkaProperties, "airline-delay-performance", "AirlineDelayPerformance");
+        this.hourlyDelaysTableName = ConfigLoader.getTableName(kafkaProperties, "hourly-delays", "HourlyDelays");
+        
+        LOG.info("Using table name: {}, delay performance table: {}, hourly delays table: {}", 
+                tableName, delayPerformanceTableName, hourlyDelaysTableName);
     }
     
     /**
@@ -56,7 +65,7 @@ public class AirlineDelayAnalytics {
         // Create flight table using the Table API
         Table flightTable = FlightTableApiFactory.createFlightTable(
                 tableEnv, 
-                TABLE_NAME, 
+                tableName, 
                 topic, 
                 kafkaProperties
         );
@@ -73,7 +82,7 @@ public class AirlineDelayAnalytics {
             );
         
         // Register result table
-        tableEnv.createTemporaryView("airline_delay_performance", delayPerformance);
+        tableEnv.createTemporaryView(delayPerformanceTableName, delayPerformance);
         
         return delayPerformance;
     }
@@ -89,27 +98,27 @@ public class AirlineDelayAnalytics {
         // Create flight table using the Table API
         Table flightTable = FlightTableApiFactory.createFlightTable(
                 tableEnv, 
-                TABLE_NAME, 
+                tableName, 
                 topic, 
                 kafkaProperties
         );
         
         // Use SQL for time-windowed analysis since it's more straightforward for this use case
         tableEnv.executeSql(
-            "CREATE TEMPORARY VIEW hourly_delays AS " +
+            "CREATE TEMPORARY VIEW " + hourlyDelaysTableName + " AS " +
             "SELECT " +
             "  airline, " +
             "  TUMBLE_START(event_time, INTERVAL '1' HOUR) AS window_start, " +
             "  TUMBLE_END(event_time, INTERVAL '1' HOUR) AS window_end, " +
             "  AVG(actualDeparture - scheduledDeparture) AS avg_delay, " +
             "  COUNT(*) AS flight_count " +
-            "FROM " + TABLE_NAME + " " +
+            "FROM " + tableName + " " +
             "WHERE actualDeparture IS NOT NULL " +
             "GROUP BY airline, TUMBLE(event_time, INTERVAL '1' HOUR)"
         );
         
         // Return the table
-        return tableEnv.from("hourly_delays");
+        return tableEnv.from(hourlyDelaysTableName);
     }
     
     /**

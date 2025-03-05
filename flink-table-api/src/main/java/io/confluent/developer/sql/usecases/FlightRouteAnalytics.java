@@ -1,5 +1,6 @@
 package io.confluent.developer.sql.usecases;
 
+import io.confluent.developer.sql.config.ConfigLoader;
 import io.confluent.developer.sql.table.FlightTableApiFactory;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
@@ -18,12 +19,14 @@ import static org.apache.flink.table.api.Expressions.$;
  */
 public class FlightRouteAnalytics {
     private static final Logger LOG = LoggerFactory.getLogger(FlightRouteAnalytics.class);
-    private static final String TABLE_NAME = "flight_source";
     
     private final StreamExecutionEnvironment streamEnv;
     private final StreamTableEnvironment tableEnv;
     private final Properties kafkaProperties;
     private final String topic;
+    private final String tableName;
+    private final String routePopularityTableName;
+    private final String airlineRoutesTableName;
     
     /**
      * Creates a new FlightRouteAnalytics instance.
@@ -42,6 +45,12 @@ public class FlightRouteAnalytics {
         this.tableEnv = tableEnv;
         this.kafkaProperties = kafkaProperties;
         this.topic = topic;
+        this.tableName = ConfigLoader.getTableName(kafkaProperties, "flights", "Flights");
+        this.routePopularityTableName = ConfigLoader.getTableName(kafkaProperties, "route-popularity", "RoutePopularity");
+        this.airlineRoutesTableName = ConfigLoader.getTableName(kafkaProperties, "airline-routes", "AirlineRoutes");
+        
+        LOG.info("Using table name: {}, route popularity table: {}, airline routes table: {}", 
+                tableName, routePopularityTableName, airlineRoutesTableName);
     }
     
     /**
@@ -55,7 +64,7 @@ public class FlightRouteAnalytics {
         // Create flight table using the Table API
         Table flightTable = FlightTableApiFactory.createFlightTable(
                 tableEnv, 
-                TABLE_NAME, 
+                tableName, 
                 topic, 
                 kafkaProperties
         );
@@ -70,7 +79,7 @@ public class FlightRouteAnalytics {
             );
         
         // Register result table
-        tableEnv.createTemporaryView("route_popularity", routePopularity);
+        tableEnv.createTemporaryView(routePopularityTableName, routePopularity);
         
         return routePopularity;
     }
@@ -86,7 +95,7 @@ public class FlightRouteAnalytics {
         // Create flight table using the Table API
         Table flightTable = FlightTableApiFactory.createFlightTable(
                 tableEnv, 
-                TABLE_NAME, 
+                tableName, 
                 topic, 
                 kafkaProperties
         );
@@ -102,7 +111,7 @@ public class FlightRouteAnalytics {
             );
         
         // Register result table
-        tableEnv.createTemporaryView("airline_routes", airlineRoutes);
+        tableEnv.createTemporaryView(airlineRoutesTableName, airlineRoutes);
         
         return airlineRoutes;
     }

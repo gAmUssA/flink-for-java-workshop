@@ -17,7 +17,7 @@ import java.util.Properties;
  */
 public class FlinkTableApiMain {
     private static final Logger LOG = LoggerFactory.getLogger(FlinkTableApiMain.class);
-    private static final String DEFAULT_TOPIC = "flights";
+    private static final String DEFAULT_TOPIC = "flights-avro";
     private static final String DEFAULT_ENV = "local";
 
     public static void main(String[] args) throws Exception {

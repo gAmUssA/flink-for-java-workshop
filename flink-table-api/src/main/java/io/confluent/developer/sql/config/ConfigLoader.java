@@ -48,6 +48,32 @@ public class ConfigLoader {
     }
     
     /**
+     * Gets a table name from properties, or returns the default name if not found.
+     *
+     * @param properties Properties to look up the table name in
+     * @param key The key suffix to look for (will be prefixed with "table.")
+     * @param defaultName The default table name to return if not found in properties
+     * @return The table name from properties or the default
+     */
+    public static String getTableName(Properties properties, String key, String defaultName) {
+        String propertyKey = "table." + key;
+        return properties.getProperty(propertyKey, defaultName);
+    }
+    
+    /**
+     * Gets a topic name from properties, or returns the default name if not found.
+     *
+     * @param properties Properties to look up the topic name in
+     * @param key The key suffix to look for (will be prefixed with "topic.")
+     * @param defaultName The default topic name to return if not found in properties
+     * @return The topic name from properties or the default
+     */
+    public static String getTopicName(Properties properties, String key, String defaultName) {
+        String propertyKey = "topic." + key;
+        return properties.getProperty(propertyKey, defaultName);
+    }
+    
+    /**
      * Resolves environment variables in property values.
      * Replaces ${ENV_VAR} with the corresponding environment variable value.
      *
