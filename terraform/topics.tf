@@ -1,6 +1,6 @@
 resource "confluent_kafka_topic" "flights_avro" {
 
-  topic_name = "flights_avro"
+  topic_name = "flights"
 
   kafka_cluster {
     id = confluent_kafka_cluster.kafka_cluster.id

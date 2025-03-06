@@ -3,6 +3,8 @@ package io.confluent.developer.generator;
 import io.confluent.developer.models.flight.Flight;
 import io.confluent.developer.serialization.FlightAvroSerializationSchema;
 import io.confluent.developer.utils.ConfigUtils;
+import io.confluent.developer.utils.ConfigurationManager;
+
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.sink.KafkaSinkBuilder;
@@ -23,31 +25,25 @@ public class DataGeneratorJob {
 
     public static void main(String[] args) throws Exception {
         // Parse command line parameters
-        ParameterTool params = ParameterTool.fromArgs(args);
+        final ParameterTool params = ParameterTool.fromArgs(args);
         
-        // Load properties based on environment
-        String propertiesFile = DEFAULT_PROPERTIES_FILE;
-        if (params.has("env")) {
-            String env = params.get("env");
-            if ("local".equalsIgnoreCase(env)) {
-                propertiesFile = LOCAL_PROPERTIES_FILE;
-            } else if ("cloud".equalsIgnoreCase(env)) {
-                propertiesFile = CLOUD_PROPERTIES_FILE;
-            }
-        } else if (params.has("props")) {
-            propertiesFile = params.get("props");
-        }
-        
-        LOG.info("Loading properties from: {}", propertiesFile);
-        Properties properties = ConfigUtils.loadProperties(propertiesFile);
-        
+        // Get the use case and environment
+        String environment = params.get("env", "local");
+
+        LOG.info("Starting Flink Flight Generator application:, environment: {}", environment);
+
+        final Properties properties = new ConfigurationManager(environment, "flight-data-generator").getProperties();
         // Extract configuration values
+        // Extract configuration values with consistent property names
         String bootstrapServers = ConfigUtils.getProperty(properties, "bootstrap.servers", "localhost:29092");
         String topicName = ConfigUtils.getProperty(properties, "topic.name", "flights");
         String schemaRegistryUrl = ConfigUtils.getProperty(properties, "schema.registry.url", "http://localhost:8081");
         int generatorRate = Integer.parseInt(ConfigUtils.getProperty(properties, "generator.rate", "10"));
         int generatorParallelism = Integer.parseInt(ConfigUtils.getProperty(properties, "generator.parallelism", "1"));
-        String environment = ConfigUtils.getProperty(properties, "environment", "local");
+        
+        // Extract environment information consistently
+        boolean isCloud = "cloud".equalsIgnoreCase(environment) || 
+                         "true".equalsIgnoreCase(properties.getProperty("cloud"));
         
         LOG.info("Starting Flight Data Generator with configuration:");
         LOG.info("  Environment: {}", environment);
@@ -77,7 +73,7 @@ public class DataGeneratorJob {
                 .setRecordSerializer(new FlightAvroSerializationSchema(topicName, schemaRegistryUrl, properties));
         
         // Add Confluent Cloud specific configurations if in cloud environment
-        if ("cloud".equalsIgnoreCase(environment)) {
+        if (isCloud) {
             Properties kafkaProps = new Properties();
             
             // Security settings
@@ -98,7 +94,7 @@ public class DataGeneratorJob {
             
             LOG.info("Configured for Confluent Cloud with security settings");
         }
-        
+        sinkBuilder.setKafkaProducerConfig(properties);        
         KafkaSink<Flight> kafkaSink = sinkBuilder.build();
         
         // Add the sink to the stream

@@ -91,7 +91,7 @@ public class FlightAvroSerializationSchema implements KafkaRecordSerializationSc
             
             // Check if we need to add authentication for Schema Registry
             String environment = ConfigUtils.getProperty(properties, "environment", "local");
-            if ("cloud".equalsIgnoreCase(environment)) {
+            if ("cloud".equalsIgnoreCase(environment) || "true".equalsIgnoreCase(properties.getProperty("cloud"))) {
                 String basicAuthUserInfo = ConfigUtils.getProperty(properties, "schema.registry.basic.auth.user.info", "");
                 String basicAuthSource = ConfigUtils.getProperty(properties, "schema.registry.basic.auth.credentials.source", "USER_INFO");
                 

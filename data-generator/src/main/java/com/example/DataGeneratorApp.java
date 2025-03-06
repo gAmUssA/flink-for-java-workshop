@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import io.confluent.developer.models.reference.Airline;
 import io.confluent.developer.models.reference.Airport;
 import io.confluent.developer.utils.ConfigUtils;
+import io.confluent.developer.utils.ConfigurationManager;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -30,23 +31,12 @@ public class DataGeneratorApp implements Callable<Integer> {
     @Option(names = {"-e", "--env"}, description = "Environment (local or cloud)", defaultValue = "local")
     private String environment;
     
-    @Option(names = {"-p", "--properties"}, description = "Path to properties file")
-    private String propertiesPath;
-    
-    @Option(names = {"--cloud-key"}, description = "Confluent Cloud API Key (overrides properties)")
-    private String cloudKey;
-    
-    @Option(names = {"--cloud-secret"}, description = "Confluent Cloud API Secret (overrides properties)")
-    private String cloudSecret;
-    
-    @Option(names = {"-b", "--bootstrap-servers"}, description = "Kafka bootstrap servers (overrides properties)")
-    private String bootstrapServers;
-
     private Properties properties;
     private String topicAirlines;
     private String topicAirports;
     private int numAirlines;
     private int numAirports;
+    private boolean isCloud;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new DataGeneratorApp()).execute(args);
@@ -79,43 +69,29 @@ public class DataGeneratorApp implements Callable<Integer> {
     }
     
     private void loadProperties() {
-        String propertiesFile;
         
-        // Determine which properties file to use
-        if (propertiesPath != null) {
-            propertiesFile = propertiesPath;
-        } else {
-            propertiesFile = environment.equalsIgnoreCase("cloud") ? 
-                    "cloud.properties" : "local.properties";
-        }
 
-        LOG.info("Loading properties from: {}", propertiesFile);
-        properties = ConfigUtils.loadProperties(propertiesFile);
+        LOG.info("Starting Airport and Airlines Data Generator application:, environment: {}", environment);
+
+        properties = new ConfigurationManager(environment, "ref-data-generator").getProperties();
         
-        // Extract configuration values
+        // Extract configuration values with consistent property names
         String bootstrapServers = ConfigUtils.getProperty(properties, "bootstrap.servers", "localhost:29092");
         String schemaRegistryUrl = ConfigUtils.getProperty(properties, "schema.registry.url", "http://localhost:8081");
         int airlinesCount = Integer.parseInt(ConfigUtils.getProperty(properties, "generator.airlines.count", "20"));
         int airportsCount = Integer.parseInt(ConfigUtils.getProperty(properties, "generator.airports.count", "50"));
-        environment = ConfigUtils.getProperty(properties, "environment", "local");
+        
+        // Extract environment information consistently
+        this.isCloud = "cloud".equalsIgnoreCase(environment) || 
+                      "true".equalsIgnoreCase(properties.getProperty("cloud"));
 
-        LOG.info("Starting Flight Data Generator with configuration:");
+        LOG.info("🛅 Starting Ref Data Generator with configuration:");
         LOG.info("  Environment: {}", environment);
         LOG.info("  Bootstrap Servers: {}", bootstrapServers);
         LOG.info("  Schema Registry URL: {}", schemaRegistryUrl);
         LOG.info("  Airlines Count: {}", airlinesCount);
         LOG.info("  Airports Count: {}", airportsCount);
         
-        // If properties couldn't be loaded, create an empty one to avoid NPE
-        if (properties == null) {
-            properties = new Properties();
-            LOG.warn("Could not load properties from {}. Using defaults.", propertiesFile);
-        }
-        
-        // Set environment property
-        properties.setProperty("environment", environment);
-        
-        LOG.info("Loaded properties for environment: {}", environment);
     }
     
     private void extractConfiguration() {
@@ -180,7 +156,7 @@ public class DataGeneratorApp implements Callable<Integer> {
         LOG.info("Creating Kafka topics if they don't exist");
         
         // Determine replication factor based on environment
-        short replicationFactor = environment.equalsIgnoreCase("cloud") ? (short)3 : (short)1;
+        short replicationFactor = isCloud ? (short)3 : (short)1;
         
         // Create topics
         KafkaProducerFactory.createTopicsIfNotExist(

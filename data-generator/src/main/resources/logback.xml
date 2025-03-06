@@ -1,16 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Define color patterns for different log levels -->
+    <property name="CONSOLE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %yellow([%thread]) %cyan(%logger{36}) - %msg%n"/>
+    
+    <!-- Console appender with colors -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-    </root>
+    <!-- Application-specific logger configuration -->
+    <logger name="com.example" level="INFO"/>
     
-    <!-- Reduce logging from Kafka -->
-    <logger name="org.apache.kafka" level="WARN" />
-    <logger name="io.confluent" level="WARN" />
+    <!-- Framework loggers -->
+    <logger name="org.apache.kafka" level="WARN"/>
+    <logger name="io.confluent" level="WARN"/>
+    <logger name="org.apache.zookeeper" level="WARN"/>
+    <logger name="org.jboss.logging" level="WARN"/>
+    
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
 </configuration>

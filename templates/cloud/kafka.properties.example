@@ -1,0 +1,13 @@
+# Kafka Configuration for cloud environment
+bootstrap.servers=${BOOTSTRAP_SERVERS}
+security.protocol=SASL_SSL
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username='${API_KEY}' password='${API_SECRET}';
+client.dns.lookup=use_all_dns_ips
+session.timeout.ms=45000
+acks=all
+
+# Schema Registry Configuration for cloud environment
+schema.registry.url=${SCHEMA_REGISTRY_URL}
+schema.registry.basic.auth.user.info=${SCHEMA_REGISTRY_KEY}:${SCHEMA_REGISTRY_SECRET}
+schema.registry.basic.auth.credentials.source=USER_INFO
