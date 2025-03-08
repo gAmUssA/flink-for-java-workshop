@@ -19,7 +19,7 @@ dependencies {
     implementation(project(":common:models"))
 
     // Kafka
-    implementation("org.apache.kafka:kafka-clients:3.8.0")
+    implementation("org.apache.kafka:kafka-clients:3.9.0")
 
     // Avro and Schema Registry
     implementation("org.apache.avro:avro:1.12.0")
