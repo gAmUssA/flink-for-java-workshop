@@ -36,7 +36,7 @@ dependencies {
     implementation("info.picocli:picocli:4.7.5")
 
     // Logging
-    implementation("org.slf4j:slf4j-api:2.0.11")
+    implementation("org.slf4j:slf4j-api:2.0.17")
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
     // Testing
