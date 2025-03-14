@@ -31,7 +31,7 @@ allprojects {
 subprojects {
     apply(plugin = "java")
 
-    val junitVersion = "5.12.0"
+    val junitVersion = "5.12.1"
     val logbackVersion = "1.5.17"
     val slf4jVersion = "2.0.17"
 
