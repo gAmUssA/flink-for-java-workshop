@@ -40,7 +40,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
     // Testing
-    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation(platform("org.junit:junit-bom:5.12.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(project(":common:models"))
