@@ -9,7 +9,7 @@ plugins {
 }
 
 // Define versions at the root level
-val flinkVersion = "1.20.1"
+val flinkVersion = "2.0.0"
 val confluentVersion = "7.9.0"
 
 allprojects {
