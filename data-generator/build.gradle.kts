@@ -30,7 +30,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
 
     // Data generation
-    implementation("net.datafaker:datafaker:2.0.2")
+    implementation("net.datafaker:datafaker:2.4.3")
 
     // CLI parsing
     implementation("info.picocli:picocli:4.7.6")

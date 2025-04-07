@@ -5,7 +5,7 @@ plugins {
 dependencies {
     // Add model-specific dependencies here
     implementation("org.apache.avro:avro:1.12.0")
-    implementation("net.datafaker:datafaker:2.4.2")
+    implementation("net.datafaker:datafaker:2.4.3")
     implementation("org.slf4j:slf4j-api:2.0.17")
     
     // Test dependencies
