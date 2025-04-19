@@ -33,7 +33,7 @@ dependencies {
     implementation("net.datafaker:datafaker:2.4.3")
 
     // CLI parsing
-    implementation("info.picocli:picocli:4.7.6")
+    implementation("info.picocli:picocli:4.7.7")
 
     // Logging
     implementation("org.slf4j:slf4j-api:2.0.11")
