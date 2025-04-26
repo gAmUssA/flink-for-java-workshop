@@ -1,5 +1,5 @@
 val flinkVersion = rootProject.extra["flinkVersion"] as String
-val kafkaVersion = "3.4.0-1.20" // Correct version format as per requirements
+val kafkaVersion = "4.0.0-2.0" // Correct version format as per requirements
 
 dependencies {
     // Flink core dependencies
