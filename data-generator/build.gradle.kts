@@ -27,7 +27,7 @@ dependencies {
     implementation("io.confluent:kafka-schema-registry-client:7.9.0")
 
     // JSON processing
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
 
     // Data generation
     implementation("net.datafaker:datafaker:2.4.3")
