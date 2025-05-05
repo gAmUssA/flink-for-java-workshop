@@ -27,13 +27,13 @@ dependencies {
     implementation("io.confluent:kafka-schema-registry-client:7.9.0")
 
     // JSON processing
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
 
     // Data generation
     implementation("net.datafaker:datafaker:2.4.3")
 
     // CLI parsing
-    implementation("info.picocli:picocli:4.7.6")
+    implementation("info.picocli:picocli:4.7.7")
 
     // Logging
     implementation("org.slf4j:slf4j-api:2.0.11")
