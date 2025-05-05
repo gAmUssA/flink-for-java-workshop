@@ -1,12 +1,12 @@
 package io.confluent.developer.tableapi.usecases;
 
-import io.confluent.developer.tableapi.config.ConfigLoader;
-import io.confluent.developer.tableapi.table.FlightTableApiFactory;
+import io.confluent.developer.tableapi.common.FlightSchema;
+import io.confluent.developer.tableapi.common.KafkaConfig;
+import io.confluent.developer.utils.ConfigurationManager;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.expressions.Expression;
+import org.apache.flink.table.expressions.TimePointUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,174 +15,216 @@ import java.util.Properties;
 import static org.apache.flink.table.api.Expressions.*;
 
 /**
- * Analyzes airline delay performance to identify trends and patterns.
- * Implemented using Flink Table API with Confluent Avro format.
+ * Airline Delay Analytics - Analyzes airline delay performance.
+ * <p>
+ * This use case analyzes the delay performance of airlines, including average
+ * delay times, percentage of on-time flights, and delay trends over time.
  */
 public class AirlineDelayAnalytics {
     private static final Logger LOG = LoggerFactory.getLogger(AirlineDelayAnalytics.class);
-    
+
     private final StreamExecutionEnvironment streamEnv;
     private final StreamTableEnvironment tableEnv;
-    private final Properties kafkaProperties;
-    private final String topic;
-    private final String tableName;
-    private final String delayPerformanceTableName;
-    private final String hourlyDelaysTableName;
-    
+    private final ConfigurationManager configManager;
+
     /**
-     * Creates a new AirlineDelayAnalytics instance.
+     * Create a new AirlineDelayAnalytics.
      *
-     * @param streamEnv Stream execution environment
-     * @param tableEnv Table environment
-     * @param kafkaProperties Kafka properties
-     * @param topic Kafka topic name
+     * @param streamEnv The Flink stream execution environment
+     * @param tableEnv  The Flink table environment
+     * @param environment The environment (local or cloud)
      */
     public AirlineDelayAnalytics(
             StreamExecutionEnvironment streamEnv,
             StreamTableEnvironment tableEnv,
-            Properties kafkaProperties,
-            String topic) {
+            String environment) {
         this.streamEnv = streamEnv;
         this.tableEnv = tableEnv;
-        this.kafkaProperties = kafkaProperties;
-        this.topic = topic;
-        this.tableName = ConfigLoader.getTableName(kafkaProperties, "flights", "Flights");
-        this.delayPerformanceTableName = ConfigLoader.getTableName(kafkaProperties, "airline-delay-performance", "AirlineDelayPerformance");
-        this.hourlyDelaysTableName = ConfigLoader.getTableName(kafkaProperties, "hourly-delays", "HourlyDelays");
-        
-        LOG.info("Using table name: {}, delay performance table: {}, hourly delays table: {}", 
-                tableName, delayPerformanceTableName, hourlyDelaysTableName);
+        this.configManager = new ConfigurationManager(environment, "flink-table-api");
     }
-    
+
     /**
-     * Processes flight data to analyze airline delay performance.
+     * Process airline delay information.
+     * <p>
+     * This method creates the necessary tables and executes the queries to
+     * process airline delay information using the Table API.
      *
-     * @return Table with airline delay performance information
+     * @return Table containing the airline delay information
      */
-    public Table processDelayPerformance() {
-        LOG.info("Processing flight data for airline delay performance analysis");
-        
-        // Create flight table using the Table API
-        Table flightTable = FlightTableApiFactory.createFlightTable(
-                tableEnv, 
-                tableName, 
-                topic, 
-                kafkaProperties
-        );
-        
-        // Calculate delay metrics using Table API
-        Table delayPerformance = flightTable
-            .filter($("actualDeparture").isNotNull())
-            .groupBy($("airline"))
-            .select(
-                $("airline"),
-                $("actualDeparture").minus($("scheduledDeparture")).avg().as("avgDelay"),
-                $("actualDeparture").minus($("scheduledDeparture")).max().as("maxDelay"),
-                $("airline").count().as("flightCount")
-            );
-        
-        // Register result table
-        tableEnv.createTemporaryView(delayPerformanceTableName, delayPerformance);
-        
-        return delayPerformance;
-    }
-    
-    /**
-     * Processes flight data to analyze time-windowed delays.
-     *
-     * @return Table with time-windowed delay information
-     */
-    public Table processTimeWindowedDelays() {
-        LOG.info("Processing flight data for time-windowed delay analysis");
-        
-        // Create flight table using the Table API
-        Table flightTable = FlightTableApiFactory.createFlightTable(
-                tableEnv, 
-                tableName, 
-                topic, 
-                kafkaProperties
-        );
-        
-        // Use SQL for time-windowed analysis since it's more straightforward for this use case
+    public Table process() {
+        LOG.info("Processing airline delay analytics...");
+
+        // Create all necessary tables
+        createFlightsAndDelaysTables();
+
+        // Get the airline delay table name
+        String airlineDelayTable = configManager.getTableName("airline-delay-performance", "AirlineDelayPerformance");
+
+        // Create a view with on_time_percentage calculation
         tableEnv.executeSql(
-            "CREATE TEMPORARY VIEW " + hourlyDelaysTableName + " AS " +
+            "CREATE TEMPORARY VIEW airline_delay_with_percentage AS " +
             "SELECT " +
-            "  airline, " +
-            "  TUMBLE_START(event_time, INTERVAL '1' HOUR) AS window_start, " +
-            "  TUMBLE_END(event_time, INTERVAL '1' HOUR) AS window_end, " +
-            "  AVG(actualDeparture - scheduledDeparture) AS avg_delay, " +
-            "  COUNT(*) AS flight_count " +
-            "FROM " + tableName + " " +
-            "WHERE actualDeparture IS NOT NULL " +
-            "GROUP BY airline, TUMBLE(event_time, INTERVAL '1' HOUR)"
+            "  airline_code, " +
+            "  total_flights, " +
+            "  departed_flights, " +
+            "  cancelled_flights, " +
+            "  avg_delay_minutes, " +
+            "  CASE " +
+            "    WHEN departed_flights = 0 THEN NULL " +
+            "    ELSE (on_time_flights * 100.0 / departed_flights) " +
+            "  END AS on_time_percentage " +
+            "FROM " + airlineDelayTable
         );
-        
-        // Return the table
-        return tableEnv.from(hourlyDelaysTableName);
-    }
-    
-    /**
-     * Prints the airline delay performance analysis.
-     *
-     * @param delayPerformance Table with airline delay performance information
-     * @return TableResult containing the execution result
-     */
-    public TableResult printDelayPerformance(Table delayPerformance) {
-        LOG.info("Printing airline delay performance analysis");
-        
-        // Execute the query and print results
-        TableResult result = delayPerformance.execute();
-        
-        // Print the results to the console
-        result.print();
-        
+
+        // Query the view with on_time_percentage
+        Table result = tableEnv.from("airline_delay_with_percentage");
+
+        LOG.info("Executing airline delay query with Table API");
         return result;
     }
-    
+
     /**
-     * Prints the time-windowed delay analysis.
+     * Process hourly delay analytics.
+     * <p>
+     * This method queries the hourly delays view to analyze delay trends over time using Table API.
+     * If the hourly delays table doesn't exist, it will create it first.
      *
-     * @param timeWindowedDelays Table with time-windowed delay information
-     * @return TableResult containing the execution result
+     * @return TableResult containing the hourly delay analytics
      */
-    public TableResult printTimeWindowedDelays(Table timeWindowedDelays) {
-        LOG.info("Printing time-windowed delay analysis");
-        
-        // Execute the query and print results
-        TableResult result = timeWindowedDelays.execute();
-        
-        // Print the results to the console
-        result.print();
-        
-        return result;
+    public TableResult processHourlyDelays() {
+        LOG.info("Processing hourly delay analytics...");
+
+        String hourlyDelaysTable = configManager.getTableName("hourly-delays", "HourlyDelays");
+
+        // Check if the hourly delays table exists, if not create it
+        try {
+            tableEnv.from(hourlyDelaysTable);
+        } catch (Exception e) {
+            LOG.info("Hourly delays table not found, creating it first...");
+            createFlightsAndDelaysTables();
+        }
+
+        // Query the hourly delays view using Table API
+        Table result = tableEnv.from(hourlyDelaysTable)
+                .select(
+                        $("hour_window"),
+                        $("total_flights"),
+                        $("avg_delay_minutes"),
+                        $("cancelled_flights"),
+                        $("cancelled_flights").cast(DataTypes.DOUBLE())
+                                .dividedBy($("total_flights"))
+                                .times(lit(100)).as("cancellation_rate")
+                );
+
+        LOG.info("Executing hourly delays query with Table API");
+        return result.execute();
     }
-    
+
     /**
-     * Executes the use case as a standalone application.
-     *
-     * @param kafkaProperties Kafka connection properties
-     * @param topic Topic containing flight data
-     * @throws Exception If execution fails
+     * Creates the flights and delays tables needed for analytics.
+     * This is a helper method used by both process() and processHourlyDelays().
      */
-    public static void executeStandalone(Properties kafkaProperties, String topic) throws Exception {
-        LOG.info("Starting Airline Delay Performance Analysis standalone execution");
-        
-        // Create execution environment
-        StreamExecutionEnvironment streamEnv = StreamExecutionEnvironment.getExecutionEnvironment();
-        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(streamEnv);
-        
-        // Create and run the delay analytics
-        AirlineDelayAnalytics analytics = new AirlineDelayAnalytics(streamEnv, tableEnv, kafkaProperties, topic);
-        
-        // Process and print delay performance
-        Table delayPerformance = analytics.processDelayPerformance();
-        analytics.printDelayPerformance(delayPerformance);
-        
-        // Process and print time-windowed delays
-        Table timeWindowedDelays = analytics.processTimeWindowedDelays();
-        analytics.printTimeWindowedDelays(timeWindowedDelays);
-        
-        // Execute the job
-        streamEnv.execute("Airline Delay Performance Analysis");
+    private void createFlightsAndDelaysTables() {
+        // Get configuration values
+        Properties kafkaProperties = configManager.getProperties();
+        String flightsTable = configManager.getTableName("flights", "Flights");
+        String flightsTopic = configManager.getTopicName("flights", "flights-avro");
+        String airlineDelayTable = configManager.getTableName("airline-delay-performance", "AirlineDelayPerformance");
+        String hourlyDelaysTable = configManager.getTableName("hourly-delays", "HourlyDelays");
+
+        LOG.info("Initializing airline delay analytics with tables: flights={}, delays={}, hourly={}",
+                flightsTable, airlineDelayTable, hourlyDelaysTable);
+
+        // Special handling for test environment
+        if ("test".equals(configManager.getEnvironment())) {
+            // For testing, we'll skip creating the Flights table and assume it's already created by the test
+            LOG.info("Test environment detected, skipping Kafka table creation");
+
+            // Verify the Flights table exists
+            try {
+                tableEnv.from(flightsTable);
+                LOG.info("Found existing Flights table in test environment");
+            } catch (Exception e) {
+                LOG.error("Flights table not found in test environment. Make sure it's created by the test.", e);
+                throw new RuntimeException("Flights table not found in test environment", e);
+            }
+        } else {
+            // For normal operation, create the flights table using Kafka config
+            Schema flightsSchema = FlightSchema.create();
+            KafkaConfig kafkaConfig = new KafkaConfig(kafkaProperties, "airline-delay-analytics");
+            TableDescriptor flightsDescriptor = kafkaConfig.createSourceDescriptor(flightsTopic, flightsSchema);
+
+            LOG.info("Creating flights table with Table API");
+            tableEnv.createTemporaryTable(flightsTable, flightsDescriptor);
+        }
+
+        // Get the flights table
+        Table flights = tableEnv.from(flightsTable);
+
+        // Create a temporary view for calculating on-time flights
+        tableEnv.createTemporaryView("flights_temp", flights);
+
+        // Use SQL to create a view with on-time flights
+        tableEnv.executeSql(
+            "CREATE TEMPORARY VIEW flights_with_delay AS " +
+            "SELECT *, " +
+            "  CASE " +
+            "    WHEN status = 'CANCELLED' OR actual_departure IS NULL THEN 0 " +
+            "    ELSE " +
+            "      CAST(UNIX_TIMESTAMP(CAST(actual_departure AS STRING)) - " +
+            "           UNIX_TIMESTAMP(CAST(COALESCE(scheduled_departure, CURRENT_TIMESTAMP) AS STRING)) " +
+            "           AS INT) / 60 " +
+            "  END AS delay_minutes, " +
+            "  CASE " +
+            "    WHEN status = 'CANCELLED' OR actual_departure IS NULL THEN 0 " +
+            "    WHEN " +
+            "      CAST(UNIX_TIMESTAMP(CAST(actual_departure AS STRING)) - " +
+            "           UNIX_TIMESTAMP(CAST(COALESCE(scheduled_departure, CURRENT_TIMESTAMP) AS STRING)) " +
+            "           AS INT) / 60 <= 15 THEN 1 " +
+            "    ELSE 0 " +
+            "  END AS is_on_time " +
+            "FROM flights_temp"
+        );
+
+        // Create the airline delay performance view using SQL
+        tableEnv.executeSql(
+            "CREATE TEMPORARY VIEW " + airlineDelayTable + " AS " +
+            "SELECT " +
+            "  airline_code, " +
+            "  COUNT(*) AS total_flights, " +
+            "  COUNT(actual_departure) AS departed_flights, " +
+            "  SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_flights, " +
+            "  SUM(delay_minutes) AS total_delay_minutes, " +
+            "  AVG(delay_minutes) AS avg_delay_minutes, " +
+            "  SUM(is_on_time) AS on_time_flights " +
+            "FROM flights_with_delay " +
+            "GROUP BY airline_code"
+        );
+
+        LOG.info("Creating airline delay performance view with SQL");
+
+        // Create a SQL view with hour extraction
+        tableEnv.executeSql(
+            "CREATE TEMPORARY VIEW flights_with_hour AS " +
+            "SELECT *, " +
+            "  DATE_FORMAT(scheduled_departure, 'yyyy-MM-dd HH:00:00') AS hour_window " +
+            "FROM flights_with_delay"
+        );
+
+        // Create the hourly delays view using Table API with the SQL-created view
+        Table flightsWithHour = tableEnv.from("flights_with_hour");
+
+        // Create the hourly delays view using Table API
+        Table hourlyDelays = flightsWithHour
+                .groupBy($("hour_window"))
+                .select(
+                        $("hour_window"),
+                        lit(1).count().as("total_flights"),
+                        $("delay_minutes").avg().as("avg_delay_minutes"),
+                        $("status").isEqual(lit("CANCELLED")).count().as("cancelled_flights")
+                );
+
+        LOG.info("Creating hourly delays view with Table API");
+        tableEnv.createTemporaryView(hourlyDelaysTable, hourlyDelays);
     }
 }

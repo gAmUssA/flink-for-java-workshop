@@ -1,0 +1,269 @@
+= Configuration Management Framework for Java Projects
+:toc: left
+:icons: font
+:source-highlighter: highlight.js
+:imagesdir: images
+:tip-caption: 💡
+:note-caption: ℹ️
+:important-caption: ⚠️
+:caution-caption: 🔥
+:warning-caption: ⚠️
+
+== 📋 Overview
+
+This document outlines the standardized approach for configuration management in Java projects.
+It provides a consistent framework for handling properties across different environments and applications.
+
+== 📁 Directory Structure
+
+[source]
+----
+project-root/
+├── config/
+│   ├── local/
+│   │   ├── kafka.properties
+│   │   ├── tables.properties
+│   │   └── topics.properties
+│   ├── cloud/
+│   │   ├── kafka.properties
+│   │   ├── tables.properties
+│   │   └── topics.properties
+│   └── application/
+│       └── app-specific.properties
+├── templates/
+│   ├── local/
+│   │   └── ... (template property files)
+│   └── cloud/
+│       └── ... (template property files)
+└── src/main/resources/
+    ├── local.properties
+    └── cloud.properties
+----
+
+== 🔄 Configuration Loading Strategy
+
+=== Multi-location Search
+
+Properties are searched in multiple locations in this order:
+
+1. Direct filesystem path
+2. Classpath resources
+3. Under config base path
+4. Under templates directory
+
+[source,java]
+----
+// Example implementation
+public static Properties loadProperties(String propertiesFile) {
+    // First try to load from filesystem
+    Properties props = loadPropertiesFromFileSystem(propertiesFile);
+    
+    // If no properties were loaded, try to load from classpath
+    if (props.isEmpty()) {
+        props = loadPropertiesFromClasspath(propertiesFile);
+    }
+    
+    // If still no properties, try with config base path
+    if (props.isEmpty()) {
+        String configPath = Paths.get(CONFIG_BASE_PATH, propertiesFile).toString();
+        props = loadPropertiesFromFileSystem(configPath);
+    }
+    
+    // If still no properties, try templates directory
+    if (props.isEmpty()) {
+        String templatesPath = Paths.get("templates", propertiesFile).toString();
+        props = loadPropertiesFromFileSystem(templatesPath);
+    }
+    
+    return props;
+}
+----
+
+=== Environment-based Configuration
+
+* Support for different environments (local, cloud)
+* Command-line parameter to specify environment (`--env local|cloud`)
+* Environment-specific property files
+
+=== Property File Types
+
+* `kafka.properties`: Kafka connection settings
+* `topics.properties`: Topic names and configurations
+* `tables.properties`: Table names and configurations
+* Application-specific property files
+
+== 🧰 ConfigUtils API
+
+Key methods in the ConfigUtils class:
+
+[source,java]
+----
+// Load properties from a file path (tries multiple locations)
+Properties loadProperties(String propertiesFile)
+
+// Load properties from classpath
+Properties loadPropertiesFromClasspath(String resourcePath)
+
+// Load properties from filesystem
+Properties loadPropertiesFromFileSystem(String filePath)
+
+// Load environment-specific configuration
+Properties loadEnvironmentConfig(String environment)
+
+// Load application-specific configuration
+Properties loadApplicationConfig(String application)
+
+// Load both environment and application-specific configuration
+Properties loadApplicationConfig(String environment, String application)
+
+// Resolve environment variables in property values
+Properties resolveEnvironmentVariables(Properties properties)
+
+// Merge two Properties objects
+Properties mergeProperties(Properties base, Properties override)
+----
+
+== 🔍 Property Value Resolution
+
+=== Environment Variable Resolution
+
+* Syntax: `${ENV_VAR_NAME}`
+* Automatically resolved for cloud environments
+* Preserves placeholders if environment variables not found
+
+[source,java]
+----
+// Example implementation
+public static Properties resolveEnvironmentVariables(Properties properties) {
+    Properties resolvedProps = new Properties();
+    
+    for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+        String key = (String) entry.getKey();
+        String value = (String) entry.getValue();
+        
+        // Resolve environment variables in the value
+        Matcher matcher = ENV_VAR_PATTERN.matcher(value);
+        StringBuffer sb = new StringBuffer();
+        
+        while (matcher.find()) {
+            String envVarName = matcher.group(1);
+            String envVarValue = System.getenv(envVarName);
+            
+            if (envVarValue == null) {
+                LOG.warn("Environment variable {} not found, keeping placeholder", envVarName);
+                matcher.appendReplacement(sb, "\\${" + envVarName + "}");
+            } else {
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(envVarValue));
+            }
+        }
+        
+        matcher.appendTail(sb);
+        resolvedProps.setProperty(key, sb.toString());
+    }
+    
+    return resolvedProps;
+}
+----
+
+=== Default Values
+
+* Methods provide default values for missing properties
+* Helper methods for specific property types (topics, tables)
+
+[source,java]
+----
+// Example implementation
+public static String getTopicName(Properties properties, String key, String defaultName) {
+    String propertyKey = "topic." + key;
+    return properties.getProperty(propertyKey, defaultName);
+}
+----
+
+== 🖥️ Command-line Integration
+
+=== Parameter Parsing
+
+* Support for environment selection (`--env local|cloud`)
+* Custom property file path (`--props path/to/file.properties`)
+* Override specific values via command line
+
+[source,java]
+----
+// Example implementation
+ParameterTool params = ParameterTool.fromArgs(args);
+String propertiesFile = DEFAULT_PROPERTIES_FILE;
+if (params.has("env")) {
+    String env = params.get("env");
+    if ("local".equalsIgnoreCase(env)) {
+        propertiesFile = LOCAL_PROPERTIES_FILE;
+    } else if ("cloud".equalsIgnoreCase(env)) {
+        propertiesFile = CLOUD_PROPERTIES_FILE;
+    }
+} else if (params.has("props")) {
+    propertiesFile = params.get("props");
+}
+----
+
+=== Makefile Integration
+
+* Convenience targets for different environments
+* Example: `run-data-generator-local`, `run-data-generator-cloud`
+* Custom property file support: `run-data-generator-with-props PROPS=path/to/properties`
+
+[source,makefile]
+----
+.PHONY: run-data-generator-local
+run-data-generator-local:
+	@echo "${BLUE}🚀 Running Data Generator in local environment...${RESET}"
+	./gradlew :data-generator:run --args="--env local"
+	@echo "${GREEN}✅ Data generation completed!${RESET}"
+
+.PHONY: run-data-generator-cloud
+run-data-generator-cloud:
+	@echo "${BLUE}☁️ Running Data Generator in cloud environment...${RESET}"
+	./gradlew :data-generator:run --args="--env cloud"
+	@echo "${GREEN}✅ Data generation completed!${RESET}"
+
+.PHONY: run-data-generator-with-props
+run-data-generator-with-props:
+	@echo "${BLUE}🚀 Running Data Generator with custom properties...${RESET}"
+	./gradlew :data-generator:run --args="--props $(PROPS)"
+	@echo "${GREEN}✅ Data generation completed!${RESET}"
+----
+
+== ☁️ Cloud Configuration Support
+
+=== Security
+
+* Schema Registry authentication
+* Kafka security settings (SASL, SSL)
+* API key/secret management
+
+=== Terraform Integration
+
+* Property file generation from Terraform output
+* Preserves format compatible with Confluent Cloud
+
+[source,makefile]
+----
+terraform-output:
+	@echo "${BLUE}${CLOUD} Generating cloud.properties from Terraform output...${RESET}"
+	@mkdir -p config/cloud
+	cd terraform && terraform output -json | jq -r 'to_entries | map( {key: .key|tostring|split("_")|join("."), value: .value} ) | map("\(.key)=\(.value.value)") | .[]' | while read -r line ; do echo "$$line"; done > ../config/cloud/cloud.properties
+	@echo "${GREEN}${CHECK} cloud.properties generated in ../config/cloud/cloud.properties!${RESET}"
+----
+
+== 📝 Best Practices
+
+1. *Avoid hardcoding values* - use property files for all configurations
+2. *Provide sensible defaults* for local development
+3. *Separate environment-specific* from application-specific configurations
+4. *Use a consistent property naming scheme* across applications
+5. *Log loaded property counts* (but not sensitive values)
+6. *Support multiple search locations* for flexibility
+7. *Implement fallback mechanisms* when properties are missing
+
+[NOTE]
+====
+This framework provides a flexible, consistent approach to configuration management across different modules and environments in Java projects.
+====

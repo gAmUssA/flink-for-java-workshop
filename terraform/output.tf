@@ -45,3 +45,11 @@ output "session_timeout_ms" {
 output "topic_name" {
   value = confluent_kafka_topic.flights_avro.topic_name
 }
+
+output "flink_api_key" {
+  value = confluent_api_key.app-manager-flink-api-key.id
+}
+
+output "flink_api_secret" {
+  value = nonsensitive(confluent_api_key.app-manager-flink-api-key.secret)
+}

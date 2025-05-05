@@ -1,0 +1,295 @@
+= 🚀 Apache Flink Table API Workshop
+:toc: left
+:sectnums:
+:source-highlighter: highlight.js
+:icons: font
+
+== 📋 Overview
+
+This workshop guides you through real-time data processing with Apache Flink Table API using Kafka and Avro. 
+You'll learn how to build powerful streaming analytics applications that can process flight data in real-time.
+Whether you choose to run locally for development or in Confluent Cloud for production, this workshop has you covered! 
+
+The workshop is built around a realistic flight data analytics scenario with these components:
+- *Flight Data Generator* - Creates a continuous stream of flight events
+- *Reference Data Generator* - Provides airlines and airports reference information
+- *Flink Analytics* - Processes the data streams using Flink Table API
+
+== 🔨 Prerequisites
+
+=== 💻 Local Environment
+* ☁️ *Docker* (preferably OrbStack on macOS) - For containerized services
+* ☕ *Java 21* (installed via SDKMAN) - For running Flink applications 
+* 🛠️ *Gradle* (via built-in wrapper) - For building the project
+* 🧰 *Make* - For simplified command execution
+
+=== ☁️ Cloud Environment (Additional)
+* 🔐 *Confluent Cloud* account with valid API keys
+* 🌐 *Terraform* - For automated cloud resource provisioning
+* 🔧 *Confluent CLI* - For cloud management
+* 📝 *jq* - For JSON processing
+
+== 🚀 Setup Instructions
+
+=== 🏠 Local Setup
+
+1. *Clone the repository*:
++
+[source,bash]
+----
+git clone https://github.com/gAmUssA/flink-for-java-workshop.git
+cd flink-for-java-workshop
+----
+
+2. *Check prerequisites*:
++
+[source,bash]
+----
+make check-prereqs
+----
+
+3. *Initialize the environment*:
++
+[source,bash]
+----
+# Create configuration directories
+make config-init
+
+# Generate local configuration files
+make config-local
+
+# Start local Kafka and Schema Registry
+make docker-up
+----
+
+4. *Start data generators*:
++
+[source,bash]
+----
+# Generate flight data (Avro format)
+make run-data-generator-local
+
+# In a new terminal, generate reference data (JSON format)
+make run-ref-generator-local
+----
+
+=== ☁️ Cloud Setup
+
+1. *Configure Confluent Cloud credentials*:
++
+[source,bash]
+----
+# Set up Terraform for Confluent Cloud
+make setup-terraform
+----
+
+2. *Initialize cloud infrastructure*:
++
+[source,bash]
+----
+# Complete Confluent Cloud setup (init, plan, apply, output)
+make cc-setup
+----
+
+3. *Generate cloud configuration*:
++
+[source,bash]
+----
+# Create cloud configuration files
+make config-cloud
+----
+
+4. *Start data generators in cloud mode*:
++
+[source,bash]
+----
+# Generate flight data (Avro format)
+make run-data-generator-cloud
+
+# In a new terminal, generate reference data (JSON format)
+make run-ref-generator-cloud
+----
+
+== 🧠 Workshop Modules & Use Cases
+
+This workshop includes three main analytics use cases that can be run either locally or in the cloud.
+
+=== ✈️ Flight Status Dashboard
+
+This module monitors real-time flight status updates, allowing you to track flights by status (Scheduled, Departed, Arrived, Delayed, etc.).
+
+*Key features*:
+- Real-time flight status monitoring
+- Status distribution analytics
+- Delay notifications
+
+*Run locally*:
+[source,bash]
+----
+make run-sql-status-local
+----
+
+*Run in the cloud*:
+[source,bash]
+----
+make run-sql-status-cloud
+----
+
+=== 🛫 Flight Route Analytics
+
+This module analyzes flight routes and patterns, helping identify popular destinations and optimal routing.
+
+*Key features*:
+- Route popularity ranking
+- Origin-destination pairs analysis
+- Geographic distribution of flights
+
+*Run locally*:
+[source,bash]
+----
+make run-sql-routes-local
+----
+
+*Run in the cloud*:
+[source,bash]
+----
+make run-sql-routes-cloud
+----
+
+=== ⏱️ Airline Delay Analytics
+
+This module tracks and analyzes airline delays, helping identify patterns and potential issues.
+
+*Key features*:
+- Airline performance tracking
+- Delay cause analysis
+- Trend identification
+
+*Run locally*:
+[source,bash]
+----
+make run-sql-delays-local
+----
+
+*Run in the cloud*:
+[source,bash]
+----
+make run-sql-delays-cloud
+----
+
+=== 🔄 Running All Use Cases
+
+To run all analytics use cases at once:
+
+*Local execution*:
+[source,bash]
+----
+make run-sql-all-local
+----
+
+*Cloud execution*:
+[source,bash]
+----
+make run-sql-all-cloud
+----
+
+== 🔍 Technical Deep Dive
+
+=== 🧩 Project Structure
+
+This workshop uses a multi-module Gradle project structure:
+
+* *Common modules*:
+** `common:models` - Data models and schemas (Avro)
+** `common:utils` - Utility classes and configuration helpers
+
+* *Application modules*:
+** `flink-data-generator` - Generates sample flight data
+** `data-generator` - Generates reference data (airlines/airports)
+** `flink-table-api` - Flink Table API implementation for all use cases
+
+=== 📊 Data Schema
+
+The project processes two main types of data:
+
+1. *Flight events* (Avro format):
+- Flight number, route information, timestamps
+- Status updates (scheduled, departed, arrived, etc.)
+- Delay information when applicable
+
+2. *Reference data* (JSON format):
+- *Airlines*: Airline code, name, country, etc.
+- *Airports*: Airport code, name, city, country, coordinates
+
+=== 💡 Flink Table API Features
+
+The workshop demonstrates these Flink Table API capabilities:
+
+* Table creation from Kafka topics
+* Schema management with Confluent Schema Registry
+* Window aggregations (tumbling, sliding, session windows)
+* Joins between streaming and static data
+* UDFs (User-Defined Functions) for custom processing
+
+=== 🛠️ Configuration Management
+
+The application uses configuration files in two environments:
+
+*Local Environment* (`config/local/`):
+- `kafka.properties` - Local Kafka connection settings
+- `tables.properties` - Flink table configurations
+- `topics.properties` - Kafka topic mappings
+
+*Cloud Environment* (`config/cloud/`):
+- `kafka.properties` - Confluent Cloud connection settings (including authentication)
+- `tables.properties` - Flink table configurations
+- `topics.properties` - Kafka topic mappings
+
+== 📈 Monitoring
+
+=== 🏠 Local Environment
+* *Flink Dashboard*: http://localhost:8082
+* *Schema Registry*: http://localhost:8081
+* *Kafka*: localhost:29092
+
+=== ☁️ Cloud Environment
+* *Confluent Cloud Console*: https://confluent.cloud
+* *Flink Operations*: Available through Confluent Cloud Console
+
+== 🔧 Troubleshooting
+
+=== 🏠 Local Environment
+
+1. *Docker issues*:
+   - Check container status with `make docker-ps`
+   - View logs with `make docker-logs` or `make docker-logs SERVICE=kafka`
+   - Restart services with `make docker-restart`
+
+2. *Configuration issues*:
+   - Verify configuration files exist with `make config-list`
+   - Regenerate configuration with `make config-local`
+
+3. *Data generation issues*:
+   - If no data is flowing, restart generators
+   - Check Schema Registry for registered schemas
+
+=== ☁️ Cloud Environment
+
+1. *Authentication issues*:
+   - Verify API keys in cloud.properties
+   - Run `make terraform-output` to regenerate credentials
+
+2. *Topic access issues*:
+   - Check ACLs and permissions in Confluent Cloud
+   - Verify service account has appropriate roles
+
+3. *Schema Registry issues*:
+   - Check compatibility settings
+   - Verify authentication for Schema Registry
+
+== 📚 Additional Resources
+
+* *Project Repository*: https://github.com/gAmUssA/flink-for-java-workshop
+* *Apache Flink Documentation*: https://flink.apache.org/docs/stable/
+* *Confluent Cloud Documentation*: https://docs.confluent.io/cloud/current/
+* *Flink Table API & SQL*: https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/overview/

@@ -1,9 +1,6 @@
 package io.confluent.developer.tableapi.usecases;
 
-import io.confluent.developer.tableapi.config.ConfigLoader;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,9 +8,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Properties;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
@@ -28,23 +22,18 @@ public class FlightRouteAnalyticsTest {
     @Mock
     private StreamTableEnvironment tableEnv;
 
-    private Properties testProperties;
-    private final String testTopic = "flights";
+    private String testEnvironment;
 
     @BeforeEach
     public void setUp() {
-        testProperties = new Properties();
-        testProperties.setProperty("topic.flights", "flights");
-        testProperties.setProperty("table.flights", "Flights");
-        testProperties.setProperty("table.route-popularity", "RoutePopularity");
-        testProperties.setProperty("table.airline-routes", "AirlineRoutes");
+        testEnvironment = "local";
     }
 
     @Test
     public void testConstructorUsesConfigurableTableNames() {
         // Create the analytics object
         FlightRouteAnalytics analytics = new FlightRouteAnalytics(
-                streamEnv, tableEnv, testProperties, testTopic);
+                streamEnv, tableEnv, testEnvironment);
         
         // Verify the table names are correctly loaded from properties
         // We can't directly test private fields, but we can infer from behavior
@@ -58,7 +47,7 @@ public class FlightRouteAnalyticsTest {
     public void testProcessRoutePopularityUsesCorrectTableNames() {
         // Create the analytics object
         FlightRouteAnalytics analytics = new FlightRouteAnalytics(
-                streamEnv, tableEnv, testProperties, testTopic);
+                streamEnv, tableEnv, testEnvironment);
         
         // This is a simple test to verify the class compiles and runs
         // In a real test, we would verify the table name used in createFlightTable
@@ -69,7 +58,7 @@ public class FlightRouteAnalyticsTest {
     public void testProcessAirlineRoutesUsesCorrectTableNames() {
         // Create the analytics object
         FlightRouteAnalytics analytics = new FlightRouteAnalytics(
-                streamEnv, tableEnv, testProperties, testTopic);
+                streamEnv, tableEnv, testEnvironment);
         
         // This is a simple test to verify the class compiles and runs
         // In a real test, we would verify the table name used in createFlightTable

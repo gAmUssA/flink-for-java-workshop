@@ -1,0 +1,75 @@
+= Apache Flink Workshop - Full-Day Agenda
+
+📅 *Time:* 9:00 AM – 5:00 PM
+☕ *Breaks:* Coffee breaks (morning & afternoon) + 1-hour lunch
+🔧 *Format:* Mix of lectures, hands-on exercises, and interactive Q&A
+
+== 9:00 AM – 9:30 AM | Welcome & Workshop Setup
+- Instructor introduction & agenda overview
+- Quick participant introductions (optional)
+- Verify setup: Docker, Flink, Confluent Cloud access
+- Troubleshooting any setup issues
+
+== 9:30 AM – 10:30 AM | Introduction to Apache Flink & Stream Processing
+- Why real-time processing? Challenges with traditional systems
+- Apache Flink architecture overview
+- Key components: JobManager, TaskManager, Checkpoints
+- Understanding Flink’s execution model (DataStream vs. Table API)
+
+💻 *Hands-on:* Running your first Flink job in Docker
+
+☕ **10:30 AM – 10:45 AM | Morning Coffee Break**
+
+== 10:45 AM – 12:15 PM | DataStream API: Core Concepts & Hands-on
+- Understanding event time, watermarks, and windowing
+- Stateless vs. stateful processing
+- Working with transformations (map, filter, flatMap, keyBy)
+- Managing state in Flink applications
+
+💻 *Hands-on:*
+- Implementing a basic Flink job using the DataStream API
+- Experimenting with windowed aggregations
+
+🥗 **12:15 PM – 1:15 PM | Lunch Break**
+
+== 1:15 PM – 2:15 PM | Table API & SQL in Flink
+- Introduction to Flink SQL & Table API
+- Benefits of declarative stream processing
+- Converting between DataStream & Table API
+- Querying real-time data with Flink SQL
+
+💻 *Hands-on:*
+- Running SQL queries on a streaming dataset
+- Creating a Flink SQL pipeline with Kafka as a source
+
+☕ **2:15 PM – 2:30 PM | Afternoon Coffee Break**
+
+== 2:30 PM – 3:30 PM | Connecting Flink with Kafka & Confluent Cloud
+- Why Flink + Kafka is a powerful combination
+- Configuring Flink to read/write from Confluent Cloud
+- Best practices for handling Kafka topics in Flink
+
+💻 *Hands-on:*
+- Deploying a Flink job that reads from a Kafka topic
+- Writing processed results back to Kafka
+
+== 3:30 PM – 4:15 PM | Testing & Debugging Flink Applications
+- Best practices for unit and integration testing in Flink
+- Using Flink's MiniCluster for local testing
+- Debugging & logging strategies
+
+💻 *Hands-on:*
+- Writing tests for Flink jobs
+- Running a test-driven Flink pipeline
+
+== 4:15 PM – 4:45 PM | Automating Flink Deployment with Terraform (Optional)
+- Infrastructure as Code for Flink & Kafka
+- Setting up Flink jobs using Terraform
+- Automating deployment & scaling
+
+💻 *Hands-on:* Running Terraform scripts to deploy a Flink pipeline
+
+== 4:45 PM – 5:00 PM | Wrap-up & Q&A
+- Recap of key concepts
+- Additional resources for deep diving into Flink
+- Open Q&A & feedback session

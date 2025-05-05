@@ -20,6 +20,27 @@ CLOUD=☁️
 STAR=⭐
 TERRAFORM=🌐
 
+# Common variables
+GRADLE=./gradlew
+FLINK_TABLE_API_MODULE=:flink-table-api:run
+DATA_GENERATOR_MODULE=:flink-data-generator:run
+REF_GENERATOR_MODULE=:data-generator:run
+
+# Environment options
+ENV_LOCAL=local
+ENV_CLOUD=cloud
+
+# Use case options
+USECASE_STATUS=status
+USECASE_ROUTES=routes
+USECASE_DELAYS=delays
+USECASE_ALL=all
+
+# Function to generate Gradle run command with arguments
+define gradle_run
+	$(GRADLE) $(1) --args="--useCase $(2) --env $(3)"
+endef
+
 # Default target
 .PHONY: help
 help:
@@ -91,6 +112,13 @@ help:
 	@echo "${BLUE}${INFO} ☁️ tf-out${RESET}             - Shorthand for terraform-output"
 	@echo "${BLUE}${INFO} ☁️ tf-upgrade${RESET}         - Shorthand for terraform-upgrade"
 	@echo "${BLUE}${INFO} ☁️ tf-org-id${RESET}          - Shorthand for terraform-org-id"
+	@echo ""
+	@echo "${YELLOW}${STAR} Configuration Management:${RESET}"
+	@echo "${BLUE}${INFO} 🔧 config-init${RESET}        - Initialize configuration directories"
+	@echo "${BLUE}${INFO} 🏠 config-local${RESET}        - Generate local configuration files"
+	@echo "${BLUE}${INFO} ☁️ config-cloud${RESET}        - Generate cloud configuration files"
+	@echo "${BLUE}${INFO} 📊 config-app-flink-table-api${RESET} - Generate Flink Table API application configuration"
+	@echo "${BLUE}${INFO} 📋 config-list${RESET}          - List all configuration files"
 	@echo ""
 	@echo "${YELLOW}${STAR} Cleanup:${RESET}"
 	@echo "${BLUE}${INFO} 🧹 clean${RESET}              - Clean up temporary files"
@@ -317,8 +345,8 @@ terraform-org-id:
 terraform-output:
 	@echo "${BLUE}${CLOUD} Generating cloud.properties from Terraform output...${RESET}"
 	@mkdir -p ../common/utils/src/main/resources
-	cd terraform && terraform output -json | jq -r 'to_entries | map( {key: .key|tostring|split("_")|join("."), value: .value} ) | map("\(.key)=\(.value.value)") | .[]' | while read -r line ; do echo "$$line"; done > ../common/utils/src/main/resources/cloud.properties
-	@echo "${GREEN}${CHECK} cloud.properties generated in ../common/utils/src/main/resources/cloud.properties!${RESET}"
+	cd terraform && terraform output -json | jq -r 'to_entries | map( {key: .key|tostring|split("_")|join("."), value: .value} ) | map("\(.key)=\(.value.value)") | .[]' | while read -r line ; do echo "$$line"; done > ../config/cloud/cloud.properties
+	@echo "${GREEN}${CHECK} cloud.properties generated in ../config/cloud/cloud.properties!${RESET}"
 
 # Shorthand commands for Terraform operations
 .PHONY: tf-init
@@ -389,53 +417,41 @@ run-sql:
 	./gradlew :flink-table-api:run
 
 # Flink Table API Module
-.PHONY: run-sql-status-local
+
+# Helper function to run SQL use cases
+define run_sql_usecase
+	@echo "${BLUE}$(if $(filter $(ENV_CLOUD),$(3)),${CLOUD},${ROCKET}) Running $(1) with Table API ($(3))...${RESET}"
+	$(call gradle_run,$(FLINK_TABLE_API_MODULE),$(2),$(3))
+	@echo "${GREEN}${CHECK} $(1) completed!${RESET}"
+endef
+
+.PHONY: run-sql-status-local run-sql-status-cloud
 run-sql-status-local:
-	@echo "${BLUE}${ROCKET} Running Flight Status Dashboard with Table API (local)...${RESET}"
-	./gradlew :flink-table-api:run --args="status local"
-	@echo "${GREEN}${CHECK} Flight Status Dashboard completed!${RESET}"
+	$(call run_sql_usecase,Flight Status Dashboard,$(USECASE_STATUS),$(ENV_LOCAL))
 
-.PHONY: run-sql-routes-local
-run-sql-routes-local:
-	@echo "${BLUE}${ROCKET} Running Flight Route Analytics with Table API (local)...${RESET}"
-	./gradlew :flink-table-api:run --args="routes local"
-	@echo "${GREEN}${CHECK} Flight Route Analytics completed!${RESET}"
-
-.PHONY: run-sql-delays-local
-run-sql-delays-local:
-	@echo "${BLUE}${ROCKET} Running Airline Delay Analytics with Table API (local)...${RESET}"
-	./gradlew :flink-table-api:run --args="delays local"
-	@echo "${GREEN}${CHECK} Airline Delay Analytics completed!${RESET}"
-
-.PHONY: run-sql-all-local
-run-sql-all-local:
-	@echo "${BLUE}${ROCKET} Running all SQL use cases with Table API (local)...${RESET}"
-	./gradlew :flink-table-api:run --args="all local"
-	@echo "${GREEN}${CHECK} All SQL use cases completed!${RESET}"
-
-.PHONY: run-sql-status-cloud
 run-sql-status-cloud:
-	@echo "${BLUE}${CLOUD} Running Flight Status Dashboard with Table API (cloud)...${RESET}"
-	./gradlew :flink-table-api:run --args="status cloud"
-	@echo "${GREEN}${CHECK} Flight Status Dashboard completed!${RESET}"
+	$(call run_sql_usecase,Flight Status Dashboard,$(USECASE_STATUS),$(ENV_CLOUD))
 
-.PHONY: run-sql-routes-cloud
+.PHONY: run-sql-routes-local run-sql-routes-cloud
+run-sql-routes-local:
+	$(call run_sql_usecase,Flight Route Analytics,$(USECASE_ROUTES),$(ENV_LOCAL))
+
 run-sql-routes-cloud:
-	@echo "${BLUE}${CLOUD} Running Flight Route Analytics with Table API (cloud)...${RESET}"
-	./gradlew :flink-table-api:run --args="routes cloud"
-	@echo "${GREEN}${CHECK} Flight Route Analytics completed!${RESET}"
+	$(call run_sql_usecase,Flight Route Analytics,$(USECASE_ROUTES),$(ENV_CLOUD))
 
-.PHONY: run-sql-delays-cloud
+.PHONY: run-sql-delays-local run-sql-delays-cloud
+run-sql-delays-local:
+	$(call run_sql_usecase,Airline Delay Analytics,$(USECASE_DELAYS),$(ENV_LOCAL))
+
 run-sql-delays-cloud:
-	@echo "${BLUE}${CLOUD} Running Airline Delay Analytics with Table API (cloud)...${RESET}"
-	./gradlew :flink-table-api:run --args="delays cloud"
-	@echo "${GREEN}${CHECK} Airline Delay Analytics completed!${RESET}"
+	$(call run_sql_usecase,Airline Delay Analytics,$(USECASE_DELAYS),$(ENV_CLOUD))
 
-.PHONY: run-sql-all-cloud
+.PHONY: run-sql-all-local run-sql-all-cloud
+run-sql-all-local:
+	$(call run_sql_usecase,All SQL use cases,$(USECASE_ALL),$(ENV_LOCAL))
+
 run-sql-all-cloud:
-	@echo "${BLUE}${CLOUD} Running all SQL use cases with Table API (cloud)...${RESET}"
-	./gradlew :flink-table-api:run --args="all cloud"
-	@echo "${GREEN}${CHECK} All SQL use cases completed!${RESET}"
+	$(call run_sql_usecase,All SQL use cases,$(USECASE_ALL),$(ENV_CLOUD))
 
 # Docker Compose targets
 .PHONY: docker-up docker-down docker-ps docker-logs docker-restart
@@ -524,59 +540,137 @@ flink-sql-execute:
 	fi
 	docker compose run --rm -e SQL_FILE=$(SQL_FILE) sql-client
 
-# Flink Data Generator targets
-.PHONY: build-data-generator run-data-generator-local run-data-generator-cloud run-data-generator-with-props
+# Helper function to build and run generators
+define build_generator
+	@echo "${BLUE}${ROCKET} Building $(1)...${RESET}"
+	$(GRADLE) $(2):build
+	@echo "${GREEN}${CHECK} $(1) built successfully!${RESET}"
+endef
 
-build-data-generator:
-	@echo "${BLUE}${ROCKET} Building Flink Data Generator...${RESET}"
-	./gradlew :flink-data-generator:build
-	@echo "${GREEN}${CHECK} Flink Data Generator built successfully!${RESET}"
+define run_generator
+	@echo "${BLUE}$(if $(filter $(ENV_CLOUD),$(3)),${CLOUD},${ROCKET}) Running $(1) in $(3) environment...${RESET}"
+	$(GRADLE) $(2) --args="--env $(3)"
+	@echo "${GREEN}${CHECK} $(1) completed!${RESET}"
+endef
 
-run-data-generator-local:
-	@echo "${BLUE}${ROCKET} Running Flink Data Generator in local environment...${RESET}"
-	./gradlew :flink-data-generator:run --args="--env local"
-	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
-
-run-data-generator-cloud:
-	@echo "${BLUE}${CLOUD} Running Flink Data Generator in cloud environment...${RESET}"
-	./gradlew :flink-data-generator:run --args="--env cloud"
-	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
-
-run-data-generator-with-props:
-	@echo "${BLUE}${ROCKET} Running Flink Data Generator with custom properties...${RESET}"
+define run_generator_with_props
+	@echo "${BLUE}${ROCKET} Running $(1) with custom properties...${RESET}"
 	@if [ -z "$(PROPS)" ]; then \
 		echo "${RED}${ERROR} Please specify properties file with PROPS=path/to/properties.${RESET}"; \
 		exit 1; \
 	fi
-	./gradlew :flink-data-generator:run --args="--properties $(PROPS)"
-	@echo "${GREEN}${CHECK} Flink Data Generator completed!${RESET}"
+	$(GRADLE) $(2) --args="--properties $(PROPS)"
+	@echo "${GREEN}${CHECK} $(1) completed!${RESET}"
+endef
+
+# Flink Data Generator targets
+.PHONY: build-data-generator run-data-generator-local run-data-generator-cloud run-data-generator-with-props
+
+build-data-generator:
+	$(call build_generator,Flink Data Generator,$(DATA_GENERATOR_MODULE))
+
+run-data-generator-local:
+	$(call run_generator,Flink Data Generator,$(DATA_GENERATOR_MODULE),$(ENV_LOCAL))
+
+run-data-generator-cloud:
+	$(call run_generator,Flink Data Generator,$(DATA_GENERATOR_MODULE),$(ENV_CLOUD))
+
+run-data-generator-with-props:
+	$(call run_generator_with_props,Flink Data Generator,$(DATA_GENERATOR_MODULE))
 
 # Reference Data Generator targets
 .PHONY: build-ref-generator run-ref-generator-local run-ref-generator-cloud run-ref-generator-with-props
 
 build-ref-generator:
-	@echo "${BLUE}${ROCKET} Building Reference Data Generator...${RESET}"
-	./gradlew :data-generator:build
-	@echo "${GREEN}${CHECK} Reference Data Generator built successfully!${RESET}"
+	$(call build_generator,Reference Data Generator,$(REF_GENERATOR_MODULE))
 
 run-ref-generator-local:
-	@echo "${BLUE}${ROCKET} Running Reference Data Generator in local environment...${RESET}"
-	./gradlew :data-generator:run --args="--env local"
-	@echo "${GREEN}${CHECK} Reference Data Generator completed!${RESET}"
+	$(call run_generator,Reference Data Generator,$(REF_GENERATOR_MODULE),$(ENV_LOCAL))
 
 run-ref-generator-cloud:
-	@echo "${BLUE}${CLOUD} Running Reference Data Generator in cloud environment...${RESET}"
-	./gradlew :data-generator:run --args="--env cloud"
-	@echo "${GREEN}${CHECK} Reference Data Generator completed!${RESET}"
+	$(call run_generator,Reference Data Generator,$(REF_GENERATOR_MODULE),$(ENV_CLOUD))
 
 run-ref-generator-with-props:
-	@echo "${BLUE}${ROCKET} Running Reference Data Generator with custom properties...${RESET}"
-	@if [ -z "$(PROPS)" ]; then \
-		echo "${RED}${ERROR} Please specify properties file with PROPS=path/to/properties.${RESET}"; \
-		exit 1; \
-	fi
-	./gradlew :data-generator:run --args="--properties $(PROPS)"
-	@echo "${GREEN}${CHECK} Reference Data Generator completed!${RESET}"
+	$(call run_generator_with_props,Reference Data Generator,$(REF_GENERATOR_MODULE))
+
+# Configuration Management
+
+# Configuration directories
+CONFIG_DIR=config
+CONFIG_LOCAL_DIR=$(CONFIG_DIR)/local
+CONFIG_CLOUD_DIR=$(CONFIG_DIR)/cloud
+CONFIG_APP_DIR=$(CONFIG_DIR)/application
+
+# Topic names
+TOPICS=flights-avro airlines airports weather flight-delays
+TOPIC_NAMES=$(foreach topic,$(TOPICS),topic.$(topic)=$(topic))
+
+# Table names
+TABLES=Flights Airlines Airports AirlineDelayPerformance HourlyDelays RoutePopularity AirlineRoutes
+TABLE_NAMES=$(foreach table,$(TABLES),table.$(shell echo $(table) | sed 's/\([A-Z]\)/-\1/g' | sed 's/^-//' | tr '[:upper:]' '[:lower:]')=$(table))
+
+# Helper function to create configuration file
+define create_config_file
+	@echo "# $(1)" > $(2)
+	@for line in $(3); do \
+		echo "$$line" >> $(2); \
+	done
+	@echo "" >> $(2)
+endef
+
+.PHONY: config-init config-local config-cloud config-app-flink-table-api config-list
+
+config-init:
+	@echo "${BLUE}${INFO} Initializing configuration directories...${RESET}"
+	@mkdir -p $(CONFIG_LOCAL_DIR)
+	@mkdir -p $(CONFIG_CLOUD_DIR)
+	@mkdir -p $(CONFIG_APP_DIR)
+	@echo "${GREEN}${CHECK} Configuration directories created.${RESET}"
+
+config-local: config-init
+	@echo "${BLUE}${ROCKET} Generating local configuration files...${RESET}"
+	$(call create_config_file,Local Kafka Configuration,$(CONFIG_LOCAL_DIR)/kafka.properties, \
+		"bootstrap.servers=localhost:9092" \
+		"schema.registry.url=http://localhost:8081" \
+		"security.protocol=PLAINTEXT")
+
+	$(call create_config_file,Local Topic Names Configuration,$(CONFIG_LOCAL_DIR)/topics.properties,$(TOPIC_NAMES))
+	$(call create_config_file,Local Table Names Configuration,$(CONFIG_LOCAL_DIR)/tables.properties,$(TABLE_NAMES))
+	@echo "${GREEN}${CHECK} Local configuration files generated.${RESET}"
+
+config-cloud: config-init
+	@echo "${BLUE}${CLOUD} Generating cloud configuration files template...${RESET}"
+	$(call create_config_file,Cloud Kafka Configuration,$(CONFIG_CLOUD_DIR)/kafka.properties, \
+		"bootstrap.servers=\$${BOOTSTRAP_SERVERS}" \
+		"schema.registry.url=\$${SCHEMA_REGISTRY_URL}" \
+		"security.protocol=SASL_SSL" \
+		"sasl.mechanism=PLAIN" \
+		"sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username='\$${API_KEY}' password='\$${API_SECRET}';" \
+		"basic.auth.credentials.source=USER_INFO" \
+		"basic.auth.user.info=\$${SR_API_KEY}:\$${SR_API_SECRET}" \
+		"schema.registry.basic.auth.user.info=\$${SR_API_KEY}:\$${SR_API_SECRET}")
+
+	$(call create_config_file,Cloud Topic Names Configuration,$(CONFIG_CLOUD_DIR)/topics.properties,$(TOPIC_NAMES))
+	$(call create_config_file,Cloud Table Names Configuration,$(CONFIG_CLOUD_DIR)/tables.properties,$(TABLE_NAMES))
+	@echo "${GREEN}${CHECK} Cloud configuration files template generated.${RESET}"
+	@echo "${YELLOW}${WARNING} Remember to replace environment variables in cloud/kafka.properties with actual values.${RESET}"
+
+config-app-flink-table-api: config-init
+	@echo "${BLUE}${INFO} Generating Flink Table API application configuration...${RESET}"
+	$(call create_config_file,Flink Table API Application Configuration,$(CONFIG_APP_DIR)/flink-table-api.properties, \
+		"app.name=Flink Table API" \
+		"app.version=1.0.0" \
+		"app.parallelism=2" \
+		"app.checkpoint.interval=60000" \
+		"app.state.backend=rocksdb" \
+		"app.restart.strategy=fixed-delay" \
+		"app.restart.attempts=3" \
+		"app.restart.delay=10000")
+	@echo "${GREEN}${CHECK} Flink Table API application configuration generated.${RESET}"
+
+config-list:
+	@echo "${BLUE}${INFO} Listing all configuration files:${RESET}"
+	@find $(CONFIG_DIR) -type f | sort
 
 # Clean up
 .PHONY: clean
