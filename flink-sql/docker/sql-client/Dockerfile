@@ -1,4 +1,4 @@
-FROM flink:1.20.1-java17
+FROM flink:2.0.0-java17
 
 # Install necessary utilities
 RUN apt-get update && \
