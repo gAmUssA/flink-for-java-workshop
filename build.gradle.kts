@@ -85,7 +85,7 @@ configure(subprojects.filter { it.name == "flink-streaming" || it.name == "flink
         implementation("org.apache.flink:flink-runtime-web:$flinkVersion")
 
         // Flink Connectors
-        implementation("org.apache.flink:flink-connector-kafka:3.4.0-1.20")
+        implementation("org.apache.flink:flink-connector-kafka:4.0.0-2.0")
         implementation("org.apache.flink:flink-connector-files:$flinkVersion")
 
         // Confluent
