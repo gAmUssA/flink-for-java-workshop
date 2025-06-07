@@ -31,10 +31,10 @@ dependencies {
     
     // Test dependencies
     testImplementation("org.apache.flink:flink-test-utils:$flinkVersion")
-    testImplementation(platform("org.junit:junit-bom:5.12.1"))
+    testImplementation(platform("org.junit:junit-bom:5.13.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.0") // Added for aligned JUnit dependencies
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.13.1") // Added for aligned JUnit dependencies
     
     // Mockito for testing
     testImplementation("org.mockito:mockito-core:5.10.0")
