@@ -21,7 +21,7 @@ dependencies {
     
     // Dependencies for the Schema Registry
     implementation("io.confluent:kafka-schema-registry-client:7.9.0")
-    implementation("io.confluent:kafka-avro-serializer:7.9.0")
+    implementation("io.confluent:kafka-avro-serializer:7.9.2")
     
     // Logging
     implementation("org.slf4j:slf4j-api:2.0.17")
