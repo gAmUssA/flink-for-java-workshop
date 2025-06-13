@@ -30,7 +30,7 @@ services:
       - KAFKA_MIN_INSYNC_REPLICAS=1
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:7.9.0
+    image: confluentinc/cp-schema-registry:7.9.2
     hostname: schema-registry
     ports:
       - "8081:8081"
