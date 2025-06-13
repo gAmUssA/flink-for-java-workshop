@@ -20,7 +20,7 @@ dependencies {
     implementation("org.apache.avro:avro:1.12.0")
     
     // Dependencies for the Schema Registry
-    implementation("io.confluent:kafka-schema-registry-client:7.9.0")
+    implementation("io.confluent:kafka-schema-registry-client:7.9.2")
     implementation("io.confluent:kafka-avro-serializer:7.9.0")
     
     // Logging

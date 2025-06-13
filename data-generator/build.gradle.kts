@@ -24,7 +24,7 @@ dependencies {
     // Avro and Schema Registry
     implementation("org.apache.avro:avro:1.12.0")
     implementation("io.confluent:kafka-avro-serializer:7.9.0")
-    implementation("io.confluent:kafka-schema-registry-client:7.9.0")
+    implementation("io.confluent:kafka-schema-registry-client:7.9.2")
 
     // JSON processing
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
