@@ -6,7 +6,7 @@ dependencies {
     // Add model-specific dependencies here
     implementation("org.apache.avro:avro:1.12.0")
     implementation("net.datafaker:datafaker:2.4.3")
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("org.slf4j:slf4j-api:2.0.19")
     
     // Test dependencies
     testImplementation(platform("org.junit:junit-bom:5.12.1"))
