@@ -24,7 +24,7 @@ dependencies {
     implementation("io.confluent:kafka-avro-serializer:7.9.0")
     
     // Logging
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("org.slf4j:slf4j-api:2.0.19")
     
     // Project dependencies
     implementation(project(":common:models"))
